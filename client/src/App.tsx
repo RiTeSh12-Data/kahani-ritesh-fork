@@ -3,6 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import ScrollToTop from "@/components/ScrollToTop";
 import SimpleHeader from "@/components/SimpleHeader";
 import HeroSection from "@/components/HeroSection";
 import ValueProposition from "@/components/ValueProposition";
@@ -81,6 +82,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
+        <ScrollToTop />
         <Switch>
           <Route path="/" component={HomePage} />
           <Route path="/checkout" component={Checkout} />
