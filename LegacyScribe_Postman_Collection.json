@@ -1,0 +1,284 @@
+{
+  "info": {
+    "name": "LegacyScribe - Payment Webhook API",
+    "description": "Complete API collection for testing WhatsApp order confirmation and forwardable invitation links",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "webhook_secret",
+      "value": "your_webhook_secret_here",
+      "type": "string"
+    },
+    {
+      "key": "order_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Create Order",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var jsonData = pm.response.json();",
+              "pm.collectionVariables.set(\"order_id\", jsonData.id);",
+              "console.log(\"Order ID saved:\", jsonData.id);",
+              "console.log(\"Order Code:\", jsonData.uniqueCode);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerPhone\": \"9876543210\",\n  \"items\": [\n    {\n      \"productId\": \"military-veterans\",\n      \"productName\": \"Military & Veterans\",\n      \"quantity\": 1,\n      \"price\": 999\n    }\n  ],\n  \"total\": 999\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/orders",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "orders"
+          ]
+        },
+        "description": "Creates a new order with phone-only checkout. Order ID is automatically saved for use in webhook tests."
+      },
+      "response": []
+    },
+    {
+      "name": "2a. Payment Webhook - Development (No Signature)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"event\": \"payment.captured\",\n  \"payload\": {\n    \"payment\": {\n      \"entity\": {\n        \"id\": \"pay_test123\",\n        \"order_id\": \"{{order_id}}\",\n        \"amount\": 99900,\n        \"status\": \"captured\"\n      }\n    }\n  }\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/webhooks/payment",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "webhooks",
+            "payment"
+          ]
+        },
+        "description": "Test payment webhook in development mode (without signature verification). Uses order_id from previous request."
+      },
+      "response": []
+    },
+    {
+      "name": "2b. Payment Webhook - Authorized Event",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"event\": \"payment.authorized\",\n  \"payload\": {\n    \"payment\": {\n      \"entity\": {\n        \"id\": \"pay_test123\",\n        \"order_id\": \"{{order_id}}\",\n        \"amount\": 99900,\n        \"status\": \"authorized\"\n      }\n    }\n  }\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/webhooks/payment",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "webhooks",
+            "payment"
+          ]
+        },
+        "description": "Test payment.authorized event (non-terminal). Should be acknowledged without processing."
+      },
+      "response": []
+    },
+    {
+      "name": "2c. Payment Webhook - Captured Event",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"event\": \"payment.captured\",\n  \"payload\": {\n    \"payment\": {\n      \"entity\": {\n        \"id\": \"pay_test123\",\n        \"order_id\": \"{{order_id}}\",\n        \"amount\": 99900,\n        \"status\": \"captured\"\n      }\n    }\n  }\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/webhooks/payment",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "webhooks",
+            "payment"
+          ]
+        },
+        "description": "Test payment.captured event (terminal success). Should update order, send WhatsApp messages, and generate token."
+      },
+      "response": []
+    },
+    {
+      "name": "2d. Payment Webhook - Failed Event",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"event\": \"payment.failed\",\n  \"payload\": {\n    \"payment\": {\n      \"entity\": {\n        \"id\": \"pay_test456\",\n        \"order_id\": \"{{order_id}}\",\n        \"amount\": 99900,\n        \"status\": \"failed\"\n      }\n    }\n  }\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/webhooks/payment",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "webhooks",
+            "payment"
+          ]
+        },
+        "description": "Test payment.failed event (terminal failure). Should be marked as processed without WhatsApp sends."
+      },
+      "response": []
+    },
+    {
+      "name": "3. Get Order Details",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/orders/{{order_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "orders",
+            "{{order_id}}"
+          ]
+        },
+        "description": "Retrieve order details to verify payment status, confirmation timestamp, and payment ID."
+      },
+      "response": []
+    },
+    {
+      "name": "4. Test Invite Redirect (Manual)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/w/invite/550e8400-e29b-41d4-a716-446655440000",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "w",
+            "invite",
+            "550e8400-e29b-41d4-a716-446655440000"
+          ]
+        },
+        "description": "Test invite redirect with a sample token. Replace token with actual token from database or webhook response. Should redirect (302) to wa.me URL."
+      },
+      "response": []
+    },
+    {
+      "name": "5. List All Products",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/products",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "products"
+          ]
+        },
+        "description": "List all available question pack products."
+      },
+      "response": []
+    },
+    {
+      "name": "6. Create Free Trial",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerPhone\": \"9876543210\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/free-trial",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "free-trial"
+          ]
+        },
+        "description": "Register for free trial with phone number only. Should send WhatsApp confirmation message."
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Pre-request script runs before each request",
+          "console.log('Base URL:', pm.collectionVariables.get('base_url'));"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,125 @@
+Use album cover as the vinyl label on all tracks
+
+Make the following changes so that the center label of every vinyl shows the album cover image from the intro screen (ALBUM.coverSrc). This must apply to all tracks.
+
+1) Update Vinyl component to accept a label image
+
+File: src/components/Vinyl.tsx
+
+Add a new prop: labelImageSrc: string.
+
+Replace the existing colored .label element with an <img> that’s perfectly circular, centered, and under the play button.
+
+Patch:
+
+// Vinyl.tsx
+type Props = {
+  isPlaying: boolean;
+  onToggle: () => void;
+  size?: number;
+  labelImageSrc: string; // NEW
+};
+
+export default function Vinyl({ isPlaying, onToggle, size = 300, labelImageSrc }: Props) {
+  return (
+    <div
+      className={`${styles.record} ${isPlaying ? styles.spinning : styles.paused}`}
+      style={{ ['--size' as any]: `${size}px` }}
+      aria-label="Vinyl record"
+    >
+      {/* Center label image */}
+      <img
+        className={styles.labelImg}
+        src={labelImageSrc}
+        alt="Record label"
+        loading="lazy"
+        draggable={false}
+      />
+
+      {/* Play/Pause button overlay */}
+      <button
+        className={styles.playBtn}
+        aria-label={isPlaying ? "Pause" : "Play"}
+        aria-pressed={isPlaying}
+        onClick={onToggle}
+        type="button"
+      >
+        {isPlaying ? "❚❚" : "►"}
+      </button>
+    </div>
+  );
+}
+
+2) Style the label image (circular, centered, under the button)
+
+File: src/styles/vinyl.module.css
+
+Add styles for .labelImg. Keep the play button above via z-index.
+
+Patch:
+
+/* vinyl.module.css */
+.labelImg {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 34%;
+  height: 34%;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center;
+  user-select: none;
+  pointer-events: none;
+  z-index: 1; /* under play button */
+}
+
+.playBtn {
+  /* keep existing styles */
+  z-index: 2; /* above label image */
+}
+
+
+If there’s an old .label div, remove it (and any styles referencing .label) so only the image shows in the center.
+
+3) Pass the album cover as the label image for every track
+
+Simplest approach: import ALBUM in TrackSlide.tsx and pass ALBUM.coverSrc to Vinyl.
+
+File: src/components/TrackSlide.tsx
+
+Import ALBUM and add labelImageSrc={ALBUM.coverSrc} in the <Vinyl /> usage.
+
+Patch:
+
+// TrackSlide.tsx
+import { ALBUM } from "../tracks"; // add this
+
+// inside the component’s JSX where <Vinyl ... /> is rendered:
+<Vinyl
+  isPlaying={isPlaying}
+  onToggle={togglePlay}
+  size={Math.min(360, Math.floor(viewportWidth * 0.8))}
+  labelImageSrc={ALBUM.coverSrc} // NEW: same cover for all tracks
+/>
+
+
+If TrackSlide doesn’t know viewport width, keep your existing size logic; just ensure labelImageSrc is passed.
+
+4) Guarantee it applies to all tracks
+
+Ensure every instance of <Vinyl /> throughout the project receives labelImageSrc={ALBUM.coverSrc} (or pass it down from App.tsx if preferred).
+
+No per-track label overrides.
+
+5) Regression checks (must pass)
+
+On intro: album cover displays as before.
+
+On any track: the vinyl’s center shows the same album cover image (circular, cropped), and the play button sits above it.
+
+Clicking play: vinyl spins; pause: vinyl stops exactly where it is.
+
+Swipe to next/previous track: label image remains the same (album cover).
+
+End of prompt.

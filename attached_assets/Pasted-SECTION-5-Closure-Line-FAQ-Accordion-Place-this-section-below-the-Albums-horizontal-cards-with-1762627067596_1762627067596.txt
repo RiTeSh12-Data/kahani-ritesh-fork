@@ -1,0 +1,92 @@
+SECTION 5 — Closure Line + FAQ Accordion
+
+Place this section below the Albums horizontal cards, with good spacing.
+
+Centered closure text (large, bold):
+
+Keep stories alive, because stories are what make us.
+
+
+Below it, add a FAQs block with collapsible dropdowns (accordion).
+Each item should expand/collapse smoothly, mobile-first, touch-friendly.
+
+FAQ Items (use exactly):
+
+What is Kahani?
+A simple way to save your loved ones’ voices and stories — forever.
+
+How does it work?
+We send story questions on WhatsApp. They reply with voice notes. We turn those into a beautiful memory book.
+
+Who is it for?
+Anyone who wants to keep their parents’, grandparents’, or loved ones’ stories alive.
+
+Is it private?
+Completely. Your chats and voice notes stay encrypted and safe — always.
+
+Can I redo or delete a story?
+Yes. You can re-record or ask us to remove any message before your book is made.
+
+What do I get in the end?
+A keepsake book with their stories, photos, and QR codes to hear their voices.
+
+Do I need an app?
+No app, no login. Everything happens on WhatsApp.
+
+Can they speak in Hindi or another language?
+Yes. Any Indian language works — the book keeps their voice just as it is.
+
+How long does it take?
+Usually 2–4 weeks after the stories are sent.
+
+Can I gift this?
+Absolutely. You can gift a Kahani to anyone you love — one link starts their journey.
+
+Component rules
+
+File: components/SectionFiveFAQs.tsx
+
+Use headless accordion (no external UI libs).
+
+Each FAQ item:
+
+Title row (left aligned), + icon that rotates when open.
+
+Body text appears with smooth height transition.
+
+Text center-aligned for heading, left-aligned inside FAQ list.
+
+Clean, minimal, gentle spacing and rounded corners for FAQ cards.
+
+SECTION 6 — Final CTA
+
+Below FAQs, add spacing and a single primary button centered:
+
+Button label:
+
+Start your free trial now
+
+
+Props:
+
+onStartTrial?: () => void
+
+
+Button must be:
+
+Full width on mobile
+
+Rounded-2xl
+
+Large tap target
+
+High contrast
+
+DELIVERY REQUIREMENTS
+
+No external UI libraries. Tailwind only.
+
+Must integrate smoothly stacked after previous sections.
+
+Export components and create a demo page:
+app/demo/section-5-6/page.tsx rendering both sections.

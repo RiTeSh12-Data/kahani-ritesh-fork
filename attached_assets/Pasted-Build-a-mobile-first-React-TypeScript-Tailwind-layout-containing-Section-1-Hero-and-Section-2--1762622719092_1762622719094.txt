@@ -1,0 +1,96 @@
+Build a mobile-first React + TypeScript + Tailwind layout containing Section 1 (Hero) and Section 2 (Scrollable Story Intro + How It Works). Everything must be responsive and optimized for phones (390–430px width).
+
+SECTION 1 (HERO HEADER)
+
+Structure:
+
+Full-width hero section with a background image (use a placeholder for now).
+
+Top-left: Logo (placeholder image).
+
+Top-right: a button labeled Record.
+
+Centered text over the image (white, bold, multi-line):
+DADI’S STORIES AND VOICES IN A BOOK
+
+Below the hero, centered button:
+Start your free trial
+
+Styling:
+
+Background should have a dark gradient overlay for readability.
+
+Large tap targets for buttons.
+
+Everything mobile-first, rounded edges, soft shadow under navbar, safe-area padding for notch devices.
+
+Props to support later replacement:
+
+backgroundSrc?: string
+logoSrc?: string
+onRecord?: () => void
+onStartTrial?: () => void
+
+SECTION 2 (PROBLEM → VALUE → HOW IT WORKS SCROLLER)
+
+Vertical layout, centered, gentle spacing:
+
+Text block:
+
+Problem statement, bold, centered:
+WE REMEMBER THEIR VOICE, BUT FORGET THEIR STORIES. WITH KAHANI, PRESERVE BOTH.
+
+Dummy logo image below (placeholder).
+
+Product value statement (2 lines), centered:
+We turn your loved ones’ stories, wisdom, and voice into a beautiful book of memories: easy to create, impossible to forget.
+
+“How It Works” Section:
+
+Title: How This Works (ALONG WITH STOCK IMAGES)
+
+Below it: horizontal scrollable cards (snap scrolling).
+
+Each card:
+
+Placeholder image (16:9)
+
+Title + description:
+
+Step 1: Pick Your Album
+Choose the story album you want to create — the one that will capture your family’s heart.
+
+Step 2: Record Your Stories
+Share your memories, moments, and wisdom — just speak naturally, and let your stories come alive.
+
+Step 3: Make Your Kahaani Eternal
+Your stories are now safely preserved, ready to be cherished for generations.
+
+Step 4: Relish With Your Loved Ones
+Play back your kahaani and experience laughter, nostalgia, and warmth with family and friends.
+
+Technical:
+
+Use Tailwind scroll-snap:
+scroll-snap-type: x mandatory; scroll-snap-align: start; overflow-x: auto; whitespace-nowrap;
+
+Cards: rounded-2xl, drop-shadow, image on top, text below.
+
+Each image: just use stock placeholder URLs for now.
+
+Default props:
+
+logoSrc?: string
+steps?: { title: string; description: string; imageSrc: string; }[]
+
+DELIVERY RULES
+
+Use only Tailwind, no UI libraries.
+
+Export components:
+
+HeroHeader.tsx
+
+ProblemAndHowItWorks.tsx
+
+Also create a demo page app/page.tsx that renders both stacked vertically.

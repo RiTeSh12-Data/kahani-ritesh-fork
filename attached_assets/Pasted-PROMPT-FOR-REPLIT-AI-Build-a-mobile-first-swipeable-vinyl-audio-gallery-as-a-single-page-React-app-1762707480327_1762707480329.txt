@@ -1,0 +1,350 @@
+PROMPT FOR REPLIT AI
+
+Build a mobile-first, swipeable vinyl audio gallery as a single-page React app (Vite + React + TypeScript). Use no backend. Use plain CSS modules (no Tailwind). The app must work great on phones and desktop.
+
+✅ Features & Flow
+
+Intro screen (index 0)
+
+Shows Album Cover (a provided image), Title, Artist.
+
+Kahani logo fixed at the center bottom of the viewport.
+
+A subtle hint “Swipe → to start”.
+
+Swiping right goes to Track 1. Swiping left does nothing on this screen.
+
+Track screens (index 1..n)
+
+At the top: Track Name (centered).
+
+Middle: a large vinyl record graphic with:
+
+A central Play/Pause button overlay (circular).
+
+When playing, the vinyl rotates smoothly (CSS animation).
+
+When paused, the vinyl stops exactly (pause the animation, don’t reset).
+
+Below or overlaid: time elapsed / total duration (mm:ss / mm:ss).
+
+Swiping right → next track. Swiping left → previous track.
+
+If the user changes tracks while audio is playing, pause the previous track and reset its UI state.
+
+Controls & Interactions
+
+Tap the record or the play button to toggle play/pause.
+
+Keyboard: Left/Right arrows navigate tracks, Space toggles play/pause (desktop).
+
+Mouse drag left/right should also work like swipe (desktop).
+
+Auto-pause when the page loses visibility (switching tabs).
+
+Audio preloading: preload metadata so duration shows quickly.
+
+Responsive
+
+On phones, vinyl should be ~70–80% of width with safe padding.
+
+On larger screens, constrain content to a centered max-width (e.g., 480–640px).
+
+Accessibility
+
+Play button is a <button> with aria-pressed and aria-label.
+
+Display current track position with role="timer".
+
+Focus outlines visible.
+
+State rules
+
+Only one track can be playing at a time.
+
+On navigation, stop any playing audio before changing the index.
+
+Persist the current slide index in history.state so browser back/forward keeps position (optional but preferred).
+
+🗂️ Project structure
+/src
+  /assets
+    cover.jpg        (placeholder)
+    kahani-logo.png  (placeholder)
+    vinyl.png        (vinyl texture or leave empty; CSS can draw)
+    track1.mp3
+    track2.mp3
+    track3.mp3
+  /components
+    Vinyl.tsx
+    SwipePager.tsx
+    IntroSlide.tsx
+    TrackSlide.tsx
+  /styles
+    globals.css
+    vinyl.module.css
+    pager.module.css
+  main.tsx
+  App.tsx
+  tracks.ts
+index.html
+
+📦 Data model (src/tracks.ts)
+
+Create and export:
+
+export type Track = {
+  id: string;
+  title: string;   // Track Name
+  artist: string;  // Artist (can duplicate album artist)
+  audioSrc: string;
+  coverSrc?: string; // optional per-track cover
+  duration?: number; // filled after metadata load
+};
+
+export const ALBUM = {
+  title: "Memories of Home",
+  artist: "Grandma Asha",
+  coverSrc: "/src/assets/cover.jpg",
+  logoSrc: "/src/assets/kahani-logo.png",
+};
+
+export const TRACKS: Track[] = [
+  {
+    id: "t1",
+    title: "First Day of School",
+    artist: "Grandma Asha",
+    audioSrc: "/src/assets/track1.mp3",
+  },
+  {
+    id: "t2",
+    title: "How We Celebrated Diwali",
+    artist: "Grandma Asha",
+    audioSrc: "/src/assets/track2.mp3",
+  },
+  {
+    id: "t3",
+    title: "My Favorite Song",
+    artist: "Grandma Asha",
+    audioSrc: "/src/assets/track3.mp3",
+  },
+];
+
+
+I will replace files/paths later.
+
+🎛️ Swipe pager (src/components/SwipePager.tsx)
+
+Controlled component: props { index, onIndexChange, children }.
+
+Handles touch and mouse drag.
+
+Minimum swipe threshold ~60px; add inertial feel (translateX during drag).
+
+When dragging, apply CSS transform to the current slide for feedback.
+
+Prevent vertical scroll hijack: only lock if horizontal movement dominates.
+
+Add keyboard listeners (Left/Right arrows).
+
+Clamp index between 0 and children.length - 1.
+
+Style with pager.module.css:
+
+Each slide is full-viewport height minus safe area (use 100dvh).
+
+Container centers content; keep bottom space for the logo on intro.
+
+💿 Vinyl component (src/components/Vinyl.tsx)
+
+Props:
+
+{
+  isPlaying: boolean;
+  onToggle: () => void;
+  size?: number; // px, default 300
+}
+
+
+Render:
+
+A circular record with:
+
+Outer black disc
+
+Subtle grooves (CSS radial gradients)
+
+Colored label at center
+
+Overlaid play/pause button at exact center (icon can be pure CSS or SVG)
+
+When isPlaying is true, apply animation: spin 3s linear infinite;
+
+Pause by toggling animation-play-state: paused; when not playing.
+
+vinyl.module.css must include:
+
+@keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+
+.record { 
+  width: var(--size, 300px);
+  height: var(--size, 300px);
+  border-radius: 50%;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+  background:
+    radial-gradient(circle at 50% 50%, #222 0 30%, transparent 31%),
+    repeating-radial-gradient(circle at 50% 50%, #111 0 2px, #0f0f0f 3px 4px);
+  background-color: #111;
+}
+
+.record.spinning { animation: spin 3.2s linear infinite; }
+.record.paused   { animation-play-state: paused; }
+
+.label {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  width: 34%;
+  height: 34%;
+  border-radius: 50%;
+  background: #e6c15e;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+}
+
+.playBtn {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  width: 28%;
+  height: 28%;
+  border-radius: 50%;
+  backdrop-filter: blur(6px);
+  background: rgba(255,255,255,.08);
+  border: 2px solid rgba(255,255,255,.25);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+🎚️ Track slide (src/components/TrackSlide.tsx)
+
+Accepts a Track and index.
+
+Internally manages an <audio> element via ref.
+
+On metadata loaded, store duration in component state and propagate to parent if needed.
+
+On play, apply spinning class to Vinyl.
+
+On pause/end, stop spinning.
+
+Shows MM:SS / MM:SS below the vinyl, updates with timeupdate.
+
+Expose methods via props or callbacks so parent can force pause when changing slides.
+
+Rules:
+
+If the user navigates away, pause the audio and reset play state.
+
+Only one audio element should be playing across the app.
+
+🏠 Intro slide (src/components/IntroSlide.tsx)
+
+Displays album cover (use object-fit: cover; border-radius: 16px;).
+
+Album Title and Artist beneath.
+
+Kahani logo fixed centered at bottom (position: fixed; left: 50%; transform: translateX(-50%); bottom: 16px; width ~96px).
+
+“Swipe → to start” hint (small, subtle, fades in/out).
+
+🧠 App logic (src/App.tsx)
+
+Import ALBUM and TRACKS.
+
+App state: { index: number, playingTrackId?: string }
+
+Slides:
+
+Slide 0: <IntroSlide />
+
+Slides 1..n: one <TrackSlide /> per track
+
+Pass index and onIndexChange to <SwipePager />.
+
+When index changes, ensure any active audio pauses.
+
+Listen for visibilitychange to auto-pause on tab hide.
+
+🌈 Styling (src/styles/globals.css)
+
+Reset styles and set:
+
+body { background: #0b0b0b; color: #f5f5f5; font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; }
+
+Safe-area insets (env(safe-area-inset-*)).
+
+Center content with a flex column layout.
+
+Respect prefers-reduced-motion: disable spinning/animations when set.
+
+🔊 Audio specifics
+
+Use native <audio> (no third-party).
+
+Set preload="metadata".
+
+Wire events: loadedmetadata, timeupdate, ended, pause, play.
+
+Format time helper for mm:ss.
+
+Avoid memory leaks: remove listeners on unmount.
+
+🧪 Acceptance criteria (must pass)
+
+On load, I see cover, title, artist, and Kahani logo at bottom center.
+
+Swiping right goes to Track 1. Swiping left on Intro does nothing.
+
+On a track slide:
+
+Tap center button = play; vinyl rotates.
+
+Tap again = pause; vinyl freezes (no reset).
+
+Time shows and updates while playing.
+
+Swiping (or arrows) changes tracks. Old audio stops automatically.
+
+Desktop dragging works like swipe; keyboard arrows navigate; Space toggles play/pause.
+
+If I switch tabs, playback pauses.
+
+Layout looks good on iPhone/Android and desktop (vinyl proportionate).
+
+All code is TypeScript and split into the files shown.
+
+🚀 Bootstrapping
+
+Initialize with npm create vite@latest kahani-vinyl -- --template react-ts
+
+Install types as needed.
+
+Provide placeholder assets in /src/assets/ as listed. If you don’t have real audio files, create 2–3 short silent MP3 placeholders so the UI works.
+
+📝 Replaceable values
+
+I will later replace:
+
+cover.jpg with the real album photo
+
+kahani-logo.png with the real logo
+
+Each track*.mp3 with real audio
+
+Album title/artist and track titles in tracks.ts
+
+Please generate all components, styles, and a working demo state so I can run npm i && npm run dev and test immediately.

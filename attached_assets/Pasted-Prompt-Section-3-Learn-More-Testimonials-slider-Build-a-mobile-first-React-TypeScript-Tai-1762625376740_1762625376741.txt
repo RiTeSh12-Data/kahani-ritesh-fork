@@ -1,0 +1,163 @@
+Prompt — Section 3 (Learn More + Testimonials slider)
+
+Build a mobile-first React (TypeScript) + Tailwind component named SectionThreeTestimonials.
+
+What to build
+
+A stacked mobile section that appears below “How it works” and includes:
+
+A full-width primary button: Learn more (navigates later).
+
+Heading (centered, bold):
+What storytellers have to say
+
+A horizontal, snap-scrolling testimonials slider with 5 cards. Each card shows:
+
+Avatar/photo placeholder (square or circle, 64–80px).
+
+The testimonial quote text (supports English + Hindi).
+
+The attribution line (name/family), italic or subtle.
+
+Mobile-first spacing, comfy padding, smooth scroll, edge-fade gradient hints.
+
+Exact content (use exactly)
+
+Testimonials (in order):
+
+Quote: “We never imagined how easy it would be for Dad to share his stories, no writing, just speaking. And now our children can hear his voice, laugh with him, and feel closer than ever. Kahani has given our family a legacy,”
+Attribution: — Aarav & Family
+
+Quote: “मैंने कभी नहीं सोचा था कि बचपन की मेरी छोटी-छोटी कहानियाँ या सीखे हुए सबक इतना मायने रखेंगे। Kahani पर अपनी कहानियाँ रिकॉर्ड करना ऐसा था जैसे मेरी ज़िन्दगी फिर से जी रही हूँ, हँसी, चुनौतियाँ, और प्यार। अब मुझे पता है कि मेरा परिवार मुझे सुन सकता है, याद रख सकता है, और ये पल हमेशा अपने साथ रखेगा,”
+Attribution: — दादी, Meena B.
+
+Quote: “What Kahani did was unlock stories we had never heard before. My grandmother’s childhood in a small village, her friendships, the festivals she celebrated, all captured, preserved, and now part of our family’s history. It truly brought the past alive,”
+Attribution: — Rohan S.
+
+Quote: “शुरुआत में, मुझे अपनी यादें रिकॉर्ड करने को लेकर थोड़ी घबराहट थी, मुझे लगा कोई इनमे रुचि नहीं लेगा। लेकिन जैसे-जैसे मैंने बोलना शुरू किया, मुझे एहसास हुआ कि ये कहानियाँ कितनी महत्वपूर्ण हैं। Kahani ने इसे साझा करना इतना आसान बना दिया, और मेरे वंशजों के लिए मेरी आवाज़ रिकॉर्ड होना एक भावनात्मक, अविस्मरणीय अनुभव था,”
+Attribution: — पिता, Rajiv S.
+
+Quote: “The best part is seeing how the album brings us together. My cousins, my niece and nephew, they all want to listen to the recordings now. It’s more than a book, it’s our story, our voices, our memories. Thank you, Kahani,”
+Attribution: — Sonal & Amit P
+
+Implementation
+
+File: components/SectionThreeTestimonials.tsx
+
+Export default with props:
+
+export interface Testimonial {
+  id: number;
+  quote: string;
+  author: string;
+  photoSrc: string;    // default placeholder e.g. "/avatars/user1.jpg"
+  photoAlt: string;
+}
+
+export interface SectionThreeTestimonialsProps {
+  onLearnMore?: () => void;
+  testimonials?: Testimonial[]; // default to the 5 above with placeholder images
+}
+
+
+Defaults:
+
+photoSrc placeholders: /avatars/user1.jpg … /avatars/user5.jpg
+
+Accessibility:
+
+Scroller role="region" with aria-label="Testimonials carousel".
+
+Each card has aria-roledescription="slide" and aria-label="Testimonial n of 5".
+
+UX:
+
+Horizontal container: overflow-x-auto, scroll-snap-type: x mandatory.
+
+Cards: scroll-snap-align: start, rounded-2xl, shadow, p-4, bg-white (or bg-neutral-900 for dark), max width ~ 85% viewport.
+
+Add gradient peeks left/right to hint scrolling.
+
+Include a minimal demo page: app/demo/section-3/page.tsx rendering the component with default data.
+
+No external UI libs beyond Tailwind.
+
+Prompt — Section 4 (Explore Albums + horizontal album cards)
+
+Build a mobile-first React (TypeScript) + Tailwind component named SectionFourAlbums.
+
+What to build
+
+A stacked mobile section with:
+
+Spacing after testimonials.
+
+A full-width primary button: Explore albums.
+
+A horizontal, snap-scrolling row of 3 album cards. Each card includes:
+
+Cover image (16:9) placeholder.
+
+Title (bold).
+
+1–2 line supportive copy (truncate to 2 lines on mobile).
+
+Smooth horizontal scroll with snap and subtle shadows.
+
+Exact content (use exactly)
+
+Card 1
+Title: Our Family History
+Body: These questions help you revisit the people, places, and small moments that shaped your earliest memories — the roots of who you are today.
+
+Card 2
+Title: Their Life Paths
+Body: These questions invite you to reflect on your life’s journey — the moments, choices, and people that taught you who you are.
+
+Card 3
+Title: Words of Wisdom
+Body: These questions encourage you to share the wisdom, values, and reflections that your life’s journey has taught you — the thoughts you’d like to pass on.
+
+Implementation
+
+File: components/SectionFourAlbums.tsx
+
+Export default with props:
+
+export interface AlbumCard {
+  id: number;
+  title: string;
+  description: string;
+  imageSrc: string;   // default placeholder e.g. "/albums/album1.jpg"
+  imageAlt: string;
+}
+
+export interface SectionFourAlbumsProps {
+  onExploreAlbums?: () => void;
+  albums?: AlbumCard[]; // default to the 3 cards above with placeholder images
+}
+
+
+Defaults:
+
+imageSrc placeholders: /albums/album1.jpg, /albums/album2.jpg, /albums/album3.jpg
+
+Accessibility:
+
+Scroller role="region" with aria-label="Albums carousel".
+
+Each card aria-roledescription="carousel item".
+
+Buttons have aria-label and keyboard focus styles.
+
+UX:
+
+Container: overflow-x-auto, scroll-snap-type: x mandatory.
+
+Card: scroll-snap-align: start, rounded-2xl, shadow, bg-white, overflow-hidden, w-[85%] on mobile.
+
+Use edge fade gradients to hint scroll.
+
+Include demo page: app/demo/section-4/page.tsx rendering with default data.
+
+No external UI libs beyond Tailwind.

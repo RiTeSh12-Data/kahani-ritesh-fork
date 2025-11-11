@@ -1,0 +1,265 @@
+Build a mobile-first, swipeable vinyl audio gallery as a single-page React app (Vite + React + TypeScript). No backend. Use plain CSS modules (no Tailwind). Optimize for phones and desktop.
+
+Assets you can assume are attached with this prompt and available to import:
+
+src/assets/kahani-logo.png ← This is the logo I will attach
+
+src/assets/cover.jpg ← album cover I will replace later
+
+src/assets/track1.mp3, track2.mp3, track3.mp3 (placeholders)
+
+✅ Features & Flow
+
+Intro screen (slide 0)
+
+Shows Album Cover (cover.jpg), Album Title, Artist.
+
+Kahani logo (kahani-logo.png) fixed at the center bottom of the viewport.
+
+Subtle hint: “Swipe → to start”.
+
+Swiping right goes to Track 1. Swiping left does nothing.
+
+Track screens (slides 1..n)
+
+Top: Track Name (centered).
+
+Middle: a large vinyl record with a central label that displays the SAME album cover image from the intro:
+
+The album cover appears as a circular image in the middle of the record (cropped to a circle).
+
+When playing, the entire record rotates, including the center image.
+
+When paused, rotation stops exactly (don’t reset angle).
+
+Center overlay: Play/Pause button. Tapping anywhere on the record OR the button toggles play/pause.
+
+Below: elapsed / total time (mm:ss / mm:ss), live-updated.
+
+Swiping right/left moves to next/previous track. Navigating away auto-pauses the current audio.
+
+Controls
+
+Tap record or button = toggle play/pause.
+
+Keyboard (desktop): Left/Right arrows = prev/next track; Space = toggle play/pause.
+
+Mouse drag left/right works like swipe.
+
+Auto-pause when the tab loses visibility.
+
+Only one track plays at a time.
+
+Responsive
+
+On phones: vinyl ~70–80% of width with padding.
+
+On larger screens: center content; max-width ~480–640px.
+
+Accessibility
+
+Play button is a <button> with aria-pressed + aria-label.
+
+Current time announced with role="timer".
+
+Keep focus outlines.
+
+🗂️ Project structure
+/src
+  /assets
+    cover.jpg
+    kahani-logo.png
+    track1.mp3
+    track2.mp3
+    track3.mp3
+  /components
+    Vinyl.tsx
+    SwipePager.tsx
+    IntroSlide.tsx
+    TrackSlide.tsx
+  /styles
+    globals.css
+    vinyl.module.css
+    pager.module.css
+  tracks.ts
+  App.tsx
+  main.tsx
+index.html
+
+📦 Data (src/tracks.ts)
+export type Track = {
+  id: string;
+  title: string;   // Track Name
+  artist: string;  // Artist name
+  audioSrc: string;
+};
+
+export const ALBUM = {
+  title: "Memories of Home",
+  artist: "Grandma Asha",
+  coverSrc: "/src/assets/cover.jpg",        // used on intro AND as vinyl center image
+  logoSrc: "/src/assets/kahani-logo.png",   // ATTACHED WITH PROMPT
+};
+
+export const TRACKS: Track[] = [
+  { id: "t1", title: "First Day of School", artist: "Grandma Asha", audioSrc: "/src/assets/track1.mp3" },
+  { id: "t2", title: "How We Celebrated Diwali", artist: "Grandma Asha", audioSrc: "/src/assets/track2.mp3" },
+  { id: "t3", title: "My Favorite Song", artist: "Grandma Asha", audioSrc: "/src/assets/track3.mp3" },
+];
+
+🎛️ Swipe pager (src/components/SwipePager.tsx)
+
+Controlled component handling touch, mouse drag, and keyboard. Props: { index, onIndexChange, children }.
+Threshold ~60px. Horizontal-lock. Animate translateX while dragging. Clamp index. Left/Right keys change slides.
+
+💿 Vinyl component (src/components/Vinyl.tsx)
+
+Props:
+
+{ isPlaying: boolean; onToggle: () => void; size?: number; albumCoverSrc: string; }
+
+
+Render:
+
+A record element that rotates with CSS when isPlaying.
+
+Center label shows the album cover image (circular, contained) so it spins with the record (the image must be a child of the rotating element).
+
+Play/Pause button over the center; clicking record OR button toggles.
+
+src/styles/vinyl.module.css (include these exact hooks):
+
+@keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+
+.record {
+  width: var(--size, 320px);
+  height: var(--size, 320px);
+  border-radius: 50%;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+  background:
+    radial-gradient(circle at 50% 50%, #222 0 30%, transparent 31%),
+    repeating-radial-gradient(circle at 50% 50%, #111 0 2px, #0f0f0f 3px 4px);
+  background-color: #111;
+  display: grid;
+  place-items: center;
+}
+
+.spinning { animation: spin 3.2s linear infinite; }
+.paused   { animation-play-state: paused; }
+
+.centerWrap {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  width: 36%;
+  height: 36%;
+  border-radius: 50%;
+  overflow: hidden;           /* crop image to a perfect circle */
+  display: grid;
+  place-items: center;
+  border: 2px solid rgba(255,255,255,.1);
+}
+
+.labelImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;          /* album cover sits perfectly in the circle */
+}
+
+.playBtn {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  width: 28%;
+  height: 28%;
+  border-radius: 50%;
+  backdrop-filter: blur(6px);
+  background: rgba(255,255,255,.08);
+  border: 2px solid rgba(255,255,255,.25);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+
+Implementation note: The .centerWrap (with <img class="labelImg" src={albumCoverSrc} />) must be inside the .record element so it spins together with the disc when .spinning is applied to .record.
+
+🎚️ Track slide (src/components/TrackSlide.tsx)
+
+Receives a Track and the album.coverSrc as albumCoverSrc.
+
+Holds an <audio> ref. preload="metadata".
+
+On play, apply .spinning; on pause/ended, animation stops (no reset).
+
+Time display MM:SS / MM:SS via timeupdate.
+
+Expose a pause() method/callback so parent pauses during navigation.
+
+🏠 Intro slide (src/components/IntroSlide.tsx)
+
+Shows the album cover image, album title, artist.
+
+Kahani logo pinned bottom-center:
+
+position: fixed; left: 50%; transform: translateX(-50%); bottom: 16px; width: 96px;
+
+Hint text: “Swipe → to start”.
+
+🧠 App logic (src/App.tsx)
+
+State: { index, playingTrackId? }.
+
+Slides: IntroSlide (0) + one TrackSlide per TRACKS.
+
+Pass ALBUM.coverSrc into every Vinyl (so the same image appears in the center label).
+
+On index change, pause any playing audio.
+
+Listen for visibilitychange to auto-pause on tab hide.
+
+Keyboard: Space toggles track play/pause; arrows navigate.
+
+🌈 Styling (src/styles/globals.css)
+
+Dark theme: body { background: #0b0b0b; color: #f5f5f5; font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; }
+
+Use 100dvh heights and safe-area insets.
+
+Respect prefers-reduced-motion: disable spin animations when requested.
+
+🔊 Audio wiring
+
+Native <audio> only. Events: loadedmetadata, timeupdate, play, pause, ended.
+Clean up listeners on unmount. Only one <audio> playing at a time.
+
+🧪 Acceptance criteria
+
+On load, I see cover, title, artist, and Kahani logo at bottom-center (logo file is the one attached with this prompt).
+
+Swiping right opens Track 1; swiping left on intro does nothing.
+
+Track screen shows a vinyl with the album cover image in the center:
+
+Play → audio starts and the record (with center image) rotates.
+
+Pause → rotation stops exactly where it is.
+
+Time display updates while playing.
+
+Swipe/drag or Arrow keys move tracks; old audio auto-pauses.
+
+Desktop: Space toggles play/pause; drag left/right works like swipe.
+
+Switching tabs auto-pauses playback.
+
+Layout looks good on phone and desktop.
+
+🚀 Bootstrapping
+
+Init with npm create vite@latest kahani-vinyl -- --template react-ts
+
+Provide placeholder assets in /src/assets/ as listed (logo comes from the file I attached).
+
+Ensure npm i && npm run dev runs a working demo immediately.

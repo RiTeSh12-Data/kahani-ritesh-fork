@@ -1,0 +1,187 @@
+BUILD FEATURE: Customer Feedback & Review System
+
+Add a customer feedback page to the existing LegacyScribe application where customers can rate and review their storytelling experience.
+
+---
+
+PAGE ROUTE: /feedback/:orderCode
+
+PURPOSE: Collect customer satisfaction ratings, testimonials, and improvement suggestions after they complete their story collection.
+
+---
+
+FRONTEND DESIGN & LAYOUT:
+
+**Header Section:**
+- Page title: "Share Your Experience" (32px, bold, center-aligned)
+- Subheading: "Help us improve LegacyScribe for other families" (18px, gray)
+- Encouraging text: "Your feedback means the world to us ❤️" (14px, light)
+- Decorative element: Soft gold accent line or icon
+
+**Main Form Container:**
+- White card with soft shadow
+- Max-width: 700px, centered
+- Padding: 40px on desktop, 20px on mobile
+- Border-radius: 12px
+- Background: Clean white (#FFFFFF)
+
+---
+
+FORM SECTIONS (In Order):
+
+**Section 1: Overall Star Rating (Required)**
+
+Label: "How would you rate your overall experience?" (16px, bold)
+
+Interactive 5-star rating component:
+- Empty stars: Light gray (#CCCCCC)
+- Filled stars: Gold (#D4A574)
+- Size: 48px each star
+- Spacing: 8px between stars
+- Hover effect: Stars glow/enlarge slightly
+- Click to rate (1-5 stars)
+- Dynamic label below stars:
+  * 1 star = "Poor 😞"
+  * 2 stars = "Fair"
+  * 3 stars = "Good"
+  * 4 stars = "Very Good"
+  * 5 stars = "Excellent! ⭐"
+
+---
+
+**Section 2: Experience Questions (Multiple Choice)**
+
+Three questions with radio button options:
+
+Question 1: "How easy was it for your elder to use WhatsApp?"
+Radio options (vertical stack):
+- ⭐ Very Easy - They loved it!
+- 😊 Easy - No major issues
+- 😐 Neutral - Some confusion
+- 😕 Difficult - Needed help
+- 😞 Very Difficult - Too complicated
+
+Question 2: "How satisfied are you with the story quality?"
+Radio options:
+- Very Satisfied
+- Satisfied
+- Neutral
+- Dissatisfied
+- Very Dissatisfied
+
+Question 3: "Would you recommend LegacyScribe to others?"
+Radio options:
+- Definitely Yes 👍
+- Probably Yes
+- Not Sure
+- Probably Not
+- Definitely Not
+
+Styling:
+- Each question in its own section with 30px spacing
+- Radio buttons: 20px size, gold color when selected
+- Labels: 14px, comfortable line-height
+- Hover effect on radio groups
+
+---
+
+**Section 3: Written Feedback (Optional)**
+
+Label: "Tell us more about your experience" (16px, bold)
+Help text: "What did you love? What could we improve? Any special moments to share?" (12px, gray)
+
+Textarea field:
+- Min-height: 150px
+- Placeholder: "Your feedback helps us preserve more precious memories..."
+- Character counter: "0 / 500 characters" (bottom-right, 12px)
+- Max-length: 500 characters
+- Border: Light gray, changes to gold on focus
+
+---
+
+**Section 4: Testimonial Permission**
+
+Checkbox option:
+☐ "You can feature my feedback as a testimonial on your website"
+
+If checked, show additional fields (smooth slide-down animation):
+
+1. Your Name (text input):
+   - Placeholder: "e.g., Priya Sharma"
+   - Optional field
+
+2. Your Relationship (text input):
+   - Placeholder: "e.g., Granddaughter, Son, Niece"
+   - Optional field
+
+3. Profile Photo (file upload):
+   - Button: "Upload Photo (Optional)"
+   - Accepted formats: JPG, PNG
+   - Max size: 2MB
+   - Shows preview thumbnail after upload
+
+---
+
+**Section 5: Follow-Up Contact (Optional)**
+
+Small section at bottom:
+
+Checkbox: "LegacyScribe can follow up with me about my feedback"
+
+If checked, show:
+- Email input (pre-filled from order if available)
+- Phone input (optional)
+
+---
+
+**Submit Button:**
+- Full-width button
+- Text: "Submit Feedback"
+- Background: Gold (#D4A574)
+- Height: 52px
+- Font-size: 18px, bold
+- Hover: Slightly darker gold
+- Loading state: Spinner + "Submitting..."
+- Disabled until star rating selected
+
+---
+
+**THANK YOU PAGE (After Successful Submission):**
+
+Replace form with success screen:
+
+Animated elements:
+- Large checkmark icon (64px, green) with bounce animation
+- Confetti animation (3 seconds, subtle)
+
+Content:
+- Heading: "Thank You! 🙏" (36px, bold)
+- Message: "Your feedback helps us preserve more family stories for future generations."
+- Appreciation note: "We read every single review and use your insights to improve."
+
+Special Offer Section (card):
+- "Refer a Friend, Get 20% Off"
+- Referral code generator: "LEGACY-[UNIQUECODE]"
+- Share buttons:
+  * WhatsApp: "Share on WhatsApp"
+  * Email: "Send via Email"
+  * Copy link button
+- Description: "Give this code to friends. When they purchase, you both get 20% off!"
+
+Action Buttons:
+- Primary: "View My Stories" (links to /memoir/:code)
+- Secondary: "Browse More Categories" (links to /products)
+
+---
+
+BACKEND API ROUTES:
+
+1. **GET /api/feedback/check/:orderCode**
+   - Check if feedback already submitted for this order
+   - Return: { submitted: boolean, feedbackId: string | null }
+   - If already submitted, show "Thank you, feedback already received"
+
+2. **POST /api/feedback/submit**
+   - Save customer feedback to database
+   
+   Request body:

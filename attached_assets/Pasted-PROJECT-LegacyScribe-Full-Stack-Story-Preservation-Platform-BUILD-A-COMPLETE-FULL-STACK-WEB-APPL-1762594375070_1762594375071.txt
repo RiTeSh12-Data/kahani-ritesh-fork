@@ -1,0 +1,336 @@
+PROJECT: LegacyScribe - Full-Stack Story Preservation Platform
+
+BUILD A COMPLETE FULL-STACK WEB APPLICATION
+
+I want to build a complete web application called "LegacyScribe" - a platform that helps families preserve elderly and veteran stories through WhatsApp automation. This needs BOTH frontend (user-facing website) AND backend (API + WhatsApp bot).
+
+TECH STACK:
+- Frontend: React + Vite + Tailwind CSS
+- Backend: Node.js + Express.js
+- Database: SQLite (for MVP) or MongoDB
+- APIs: WhatsApp Cloud API (Meta), OpenAI API, Razorpay payments
+
+---
+
+PART 1: FRONTEND REQUIREMENTS
+
+Build a beautiful, warm, emotional website with these pages:
+
+1. LANDING PAGE (/)
+   Components needed:
+   - Hero section with headline: "Preserve Stories That Matter"
+   - Subheading: "Capture your grandparent's wisdom, veteran's service, or elder's life journey through simple WhatsApp conversations. Beautifully documented. Forever preserved."
+   - Two CTA buttons: "Start Preserving" (primary) and "See How It Works" (secondary)
+   - Background: Warm gradient from soft gold (#F5E6D3) to light amber (#E8D4B8)
+   - Trust badges: "500+ Stories Preserved" "98% Satisfaction" "Average 45 days"
+   
+   - Features section (4 cards in grid):
+     * Card 1: "Curated Question Sets" - Icon + description
+     * Card 2: "WhatsApp Conversations" - Icon + description
+     * Card 3: "Auto-Transcribed Stories" - Icon + description
+     * Card 4: "Beautiful Digital Books" - Icon + description
+   
+   - How it works timeline (3 steps):
+     * Step 1: Select question pack
+     * Step 2: Elder answers on WhatsApp
+     * Step 3: Receive digital memoir
+   
+   - Testimonials section (3 customer reviews with photos)
+   - Pricing preview
+   - FAQ accordion (5-6 common questions)
+
+2. PRODUCT CATALOG PAGE (/products)
+   Display 6 question pack categories as cards:
+   
+   - Military & Veterans (50 questions, 50 days, ₹999)
+   - Grandparent Chronicles (30 questions, 30 days, ₹799)
+   - Career & Life Lessons (40 questions, 40 days, ₹1,099)
+   - Immigration & Culture (35 questions, 35 days, ₹999)
+   - Healthcare Heroes (45 questions, 45 days, ₹1,199)
+   - Entrepreneur Legacy (50 questions, 50 days, ₹1,299)
+   
+   Each card shows: Category image, title, subtitle, price, sample question count, "View Pack" button
+   
+   Hover effects: Card lift, shadow increase, image zoom
+
+3. PRODUCT DETAIL PAGE (/products/:id)
+   Layout:
+   - Large hero image on left (60%)
+   - Product info on right (40%):
+     * Title, rating, price
+     * "What's Included" checklist
+     * "Add to Cart" button
+   - Below: Full description
+   - "Sample Questions" section showing 4-5 example questions
+   - Customer reviews (3-4 with star ratings)
+
+4. SHOPPING CART PAGE (/cart)
+   - Cart items list (thumbnail, name, price, quantity selector, remove button)
+   - Order summary sidebar (subtotal, tax, total)
+   - "Apply Coupon" input
+   - "Proceed to Checkout" button
+   - Empty cart message if no items
+
+5. CHECKOUT PAGE (/checkout)
+   Two-step process:
+   
+   Step 1: Contact Information
+   Form fields:
+   - Purchaser: First name, last name, email, phone
+   - Elder's Information: Full name, relationship, WhatsApp number, age, primary language
+   - Schedule: Daily/Every 2 days/Weekly (radio buttons)
+   - Start date picker
+   - "Continue to Payment" button
+   
+   Step 2: Payment
+   - Order review summary
+   - Razorpay payment integration (show payment button)
+   - "Complete Payment" button
+   - Security badges ("SSL Encrypted", "Powered by Razorpay")
+
+6. ORDER CONFIRMATION PAGE (/confirmation)
+   - Large success checkmark animation
+   - "Order Confirmed! 🎉" heading
+   - Order details (order ID, date, items, total)
+   - Next steps timeline:
+     * Day 1: First question sent
+     * Daily: Questions continue
+     * Day 45: Memoir ready
+   - Unique story link display: "legacyscribe.com/stories/[unique-code]"
+   - Email confirmation message
+   - "Go to My Stories" button
+
+7. STORY VIEWER PAGE (/stories/:uniqueCode)
+   Simple page (no login needed):
+   - Header: Elder's name + category
+   - List of responses (chronological):
+     * Question asked
+     * Date answered
+     * Response text (if transcribed)
+     * Audio player (if voice message)
+   - Progress indicator: "12 of 50 questions answered"
+   - "Download All Stories" button
+
+DESIGN SYSTEM FOR FRONTEND:
+- Font: Inter (Google Fonts)
+- Colors: 
+  * Primary: #2C5282 (blue)
+  * Accent: #D4A574 (gold)
+  * Success: #4CAF50 (green)
+  * Background: #FAFAF8 (warm white)
+- Border radius: 8-12px (rounded corners)
+- Shadows: Soft, subtle (0 4px 12px rgba(0,0,0,0.08))
+- Spacing: Generous padding (40-60px sections, 16-20px cards)
+- Responsive: Mobile-first, stack on small screens
+- Animations: Smooth transitions (300ms), hover effects, button states
+
+---
+
+PART 2: BACKEND API REQUIREMENTS
+
+Build Express.js API with these endpoints:
+
+API ROUTES:
+
+1. Product Routes:
+   GET /api/products - Fetch all question packs
+   GET /api/products/:id - Fetch single product details
+   
+2. Order Routes:
+   POST /api/orders - Create new order (after payment success)
+   GET /api/orders/:id - Fetch order details
+   
+3. Payment Routes:
+   POST /api/payment/webhook - Razorpay webhook (handle payment confirmation)
+   
+4. WhatsApp Routes:
+   GET /webhook - WhatsApp verification (Meta requires this)
+   POST /webhook - Receive WhatsApp messages from elders
+   POST /api/whatsapp/send - Send WhatsApp message (internal use)
+   
+5. Story Routes:
+   GET /api/stories/:uniqueCode - Fetch all responses for a story
+   POST /api/stories/response - Save new response from elder
+   
+6. Utility Routes:
+   POST /api/email/send - Send confirmation emails
+
+BACKEND LOGIC:
+
+WhatsApp Integration (Meta Cloud API - NOT Twilio):
+- Use Meta's WhatsApp Cloud API: https://graph.facebook.com/v18.0/
+- Environment variables needed:
+  * WHATSAPP_PHONE_NUMBER_ID
+  * WHATSAPP_ACCESS_TOKEN
+  * WEBHOOK_VERIFY_TOKEN
+  
+- Webhook verification (GET /webhook):
+  * Verify token from Meta
+  * Return challenge string
+  
+- Receive messages (POST /webhook):
+  * Parse incoming WhatsApp message
+  * Extract message text or audio URL
+  * Call OpenAI API if LLM needed
+  * Store response in database
+  * Send email notification to purchaser
+  
+- Send messages function:
+  * POST to https://graph.facebook.com/v18.0/{PHONE_NUMBER_ID}/messages
+  * Include Bearer token in headers
+  * Send text or template message
+
+OpenAI Integration (Optional - for LLM conversation):
+- Use OpenAI SDK: npm install openai
+- Environment variable: OPENAI_API_KEY
+- Model: gpt-4o-mini (cheap and fast)
+- System prompt: "You are a compassionate storytelling assistant helping elderly people share life stories. Keep responses under 3 sentences."
+- Store conversation history per user (last 10 messages)
+- Use for: Intelligent follow-up questions, transcription (Whisper API)
+
+Razorpay Payment Integration:
+- Environment variables:
+  * RAZORPAY_KEY_ID
+  * RAZORPAY_KEY_SECRET
+- Webhook endpoint receives payment confirmation
+- Verify webhook signature for security
+- On success: Create order, send WhatsApp onboarding, send email
+
+Email Service:
+- Use Resend or SendGrid
+- Templates:
+  * Order confirmation (includes unique story link)
+  * Daily response notification (includes transcription + audio link)
+- Environment variable: EMAIL_API_KEY
+
+Database Schema (SQLite for MVP):
+
+Tables:
+1. products (id, name, category, price, question_count, duration_days, description)
+2. orders (id, user_email, user_phone, elder_name, elder_phone, product_id, unique_code, status, created_at)
+3. questions (id, product_id, question_text, sequence_number)
+4. responses (id, order_id, question_id, response_text, audio_url, answered_at)
+5. conversations (id, phone_number, role, content, timestamp) - for LLM history
+
+---
+
+PART 3: INTEGRATION & WORKFLOW
+
+Complete user flow:
+1. User browses products on frontend → Calls GET /api/products
+2. User adds to cart → Stored in localStorage (client-side)
+3. User proceeds to checkout → Fills form
+4. User clicks payment → Razorpay modal opens (client-side integration)
+5. Payment succeeds → Razorpay webhook hits POST /api/payment/webhook
+6. Backend creates order in database with unique code
+7. Backend sends first WhatsApp message to elder
+8. Backend sends confirmation email to purchaser with unique link
+9. Elder receives WhatsApp, replies
+10. WhatsApp webhook (POST /webhook) receives reply
+11. Backend saves response to database
+12. Backend sends email to purchaser: "New response from [elder name]!"
+13. Purchaser clicks unique link → Frontend fetches GET /api/stories/:uniqueCode
+14. Purchaser sees all responses on story viewer page
+
+---
+
+ENVIRONMENT VARIABLES TO SET IN REPLIT SECRETS:
+
+WHATSAPP_PHONE_NUMBER_ID=your_phone_number_id
+WHATSAPP_ACCESS_TOKEN=your_meta_access_token
+WEBHOOK_VERIFY_TOKEN=random_secret_string
+OPENAI_API_KEY=sk-proj-xxxxx
+RAZORPAY_KEY_ID=rzp_live_xxxxx
+RAZORPAY_KEY_SECRET=xxxxx
+EMAIL_API_KEY=re_xxxxx
+DATABASE_URL=sqlite://./legacyscribe.db
+PORT=3000
+
+---
+
+DEPLOYMENT CONFIGURATION:
+
+This is a full-stack app running in ONE repl:
+- Frontend: Vite dev server (port 5173) for development, built static files for production
+- Backend: Express server (port 3000)
+- In production: Serve frontend static files from Express (app.use(express.static('dist')))
+
+Run command: node server.js (starts Express, which serves both API and frontend)
+
+Build process:
+1. Install dependencies: npm install
+2. Build frontend: cd client && npm run build
+3. Copy dist folder to backend
+4. Start server: node server.js
+
+---
+
+FILE STRUCTURE:
+
+/
+├── client/                  # React frontend
+│   ├── src/
+│   │   ├── pages/
+│   │   │   ├── Landing.jsx
+│   │   │   ├── Products.jsx
+│   │   │   ├── ProductDetail.jsx
+│   │   │   ├── Cart.jsx
+│   │   │   ├── Checkout.jsx
+│   │   │   ├── Confirmation.jsx
+│   │   │   └── StoryViewer.jsx
+│   │   ├── components/
+│   │   │   ├── Hero.jsx
+│   │   │   ├── Features.jsx
+│   │   │   ├── ProductCard.jsx
+│   │   │   ├── Testimonials.jsx
+│   │   │   └── FAQ.jsx
+│   │   ├── App.jsx
+│   │   └── main.jsx
+│   ├── package.json
+│   └── vite.config.js
+│
+├── server/                  # Express backend
+│   ├── routes/
+│   │   ├── products.js
+│   │   ├── orders.js
+│   │   ├── whatsapp.js
+│   │   ├── payments.js
+│   │   └── stories.js
+│   ├── services/
+│   │   ├── whatsappService.js
+│   │   ├── openaiService.js
+│   │   ├── emailService.js
+│   │   └── razorpayService.js
+│   ├── database/
+│   │   ├── db.js
+│   │   └── schema.sql
+│   ├── middleware/
+│   │   └── auth.js
+│   └── server.js            # Main entry point
+│
+├── package.json             # Root dependencies
+└── README.md
+
+---
+
+SPECIFIC IMPLEMENTATION REQUESTS:
+
+1. Use React Router for frontend navigation
+2. Use Axios for API calls from frontend
+3. Use express.json() middleware for parsing JSON
+4. Add CORS middleware (allow frontend origin)
+5. Add error handling for all routes (try/catch)
+6. Add input validation (email format, phone number format)
+7. Add loading states in frontend (spinners during API calls)
+8. Add success/error toast notifications in frontend
+9. Make all forms mobile-responsive
+10. Add "Back to Top" button on long pages
+11. Add favicon and meta tags for SEO
+
+CRITICAL: 
+- Do NOT use Twilio (I have direct WhatsApp Business API access from Meta)
+- Keep frontend design warm, emotional, premium (like Remento.co)
+- Ensure webhook URL works when deployed (Replit provides public URL)
+- Test payment flow with Razorpay test mode first
+
+START BUILDING: Create the full-stack application with both frontend and backend in a single Repl. Ask clarifying questions if needed, but build the core structure first.

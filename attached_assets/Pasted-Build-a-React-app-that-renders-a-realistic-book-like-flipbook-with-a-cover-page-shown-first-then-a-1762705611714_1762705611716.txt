@@ -1,0 +1,157 @@
+Build a React app that renders a realistic, book-like flipbook with a cover page shown first, then animated page turns, keyboard/touch controls, a TOC modal, and a small public API so I can script navigation later.
+
+Tech
+
+React + Vite.
+
+Library for flip animation: react-pageflip (wrapper for StPageFlip).
+
+TypeScript preferred, but JS is fine if easier.
+
+No CSS frameworks; use plain CSS modules (or a single global CSS) with clean variables.
+
+Files & Structure
+/src
+  /components
+    FlipBook.tsx
+    Controls.tsx
+    TocModal.tsx
+    Cover.tsx
+  /pages-data
+    pages.ts        // exports an array of page objects (title, html)
+  App.tsx
+  main.tsx
+  styles.css
+/assets
+  cover.jpg
+  sample-1.jpg
+  sample-2.jpg
+index.html
+
+Install
+
+Add dependency: react-pageflip.
+
+What to Build
+
+Cover-first flow
+
+Landing shows a single cover page with title, subtitle, author, and “Open Book” button.
+
+Clicking “Open Book” initializes the flipbook and jumps to page spread 1–2.
+
+Flipbook UI
+
+Use <HTMLFlipBook> from react-pageflip.
+
+Realistic page curl; left/right arrows overlaid near the gutter.
+
+Keyboard: ← previous, → next.
+
+Touch: swipe left/right.
+
+Page numbers in outer bottom corners.
+
+Controls bar
+
+Buttons: Previous, Next, Table of Contents, Zoom In, Zoom Out, Fullscreen.
+
+Progress text: “Page X of N” + slim progress bar.
+
+TOC modal
+
+Read chapter titles from pages.ts.
+
+Click TOC item to jump to that page (center the spread correctly).
+
+Accessible modal: role="dialog", focus trap, Esc to close.
+
+Data model
+
+pages.ts exports an array like:
+
+export const pages = [
+  { id: 0, kind: "front-matter", title: "Dedication", html: "<h2>Dedication</h2><p>...</p>" },
+  { id: 1, kind: "front-matter", title: "Copyright", html: "..." },
+  { id: 2, kind: "chapter", title: "Chapter 1", html: "..." },
+  // ...
+];
+
+
+Render each page as a <div class="page"> with inner HTML (safe placeholder).
+
+Public API
+Expose a small API on window.Book:
+
+next(), prev()
+
+goTo(index: number) (0-based page)
+
+getCurrentPage(): number
+
+openFromCover() (show flipbook, go to page 0 or first spread)
+Implement using a React ref to <HTMLFlipBook>.
+
+Performance
+
+Lazy-load heavy images with loading="lazy".
+
+Preload next/prev page content via small setTimeout after flip.
+
+Styling
+
+Soft paper texture background for the site.
+
+Subtle inner shadow in the gutter; thin gray edge for pages.
+
+Typography: Google Fonts “Merriweather” for body, “Inter” for UI.
+
+Respect prefers-color-scheme (light/dark).
+
+Accessibility
+
+Buttons have aria-labels and visible focus.
+
+Ensure all actions are reachable by keyboard.
+
+Starter content
+
+12 placeholder pages:
+
+0: Dedication
+
+1: Copyright
+
+2–3: Chapter 1 (lorem)
+
+4–11: mix of lorem text and 2 image pages using /assets/sample-*.jpg
+
+Small QR placeholder at the top of page 2.
+
+Acceptance Criteria
+
+App loads with only the Cover component visible and an “Open Book” CTA.
+
+Clicking CTA shows a two-page spread with animated flips.
+
+Arrows, keyboard, and swipe all work.
+
+Progress text and bar update correctly.
+
+TOC opens in an accessible modal; selecting an item jumps to that page.
+
+Zoom (CSS scale) and Fullscreen work.
+
+Responsive down to 320px wide.
+
+window.Book functions operate as described.
+
+Implementation Hints (okay to choose JS over TS if faster)
+
+Use react-pageflip’s ref methods: pageFlip().flipNext(), flipPrev(), turnToPage(n), getCurrentPageIndex().
+
+Keep page width/height ratio ~3:2. Example: desktop page 480×720, mobile scales down with max-width: 100vw.
+
+Use CSS variables for colors and sizes; add a paper-like background via subtle gradient.
+
+Please generate well-commented code for all files above, wire everything, and include placeholders so I can replace content later. No backend, no build steps beyond Vite default.

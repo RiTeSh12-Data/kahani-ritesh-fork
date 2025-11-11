@@ -1,0 +1,86 @@
+Goal
+On successful payment:
+
+Send a WhatsApp order confirmation to the customer.
+
+Send a second WhatsApp message with a forwardable link that opens WhatsApp chat with our business and carries a unique token that maps any elder’s chat back to the original order.
+
+Stack & Assumptions
+
+Node.js + Express, DB (Postgres/MySQL), ORM (Prisma or Knex).
+
+Payment webhook: generic “payment_succeeded”.
+
+WhatsApp: Meta WhatsApp Cloud API.
+
+Secrets via .env.
+
+.env
+
+WHATSAPP_TOKEN=
+WHATSAPP_PHONE_NUMBER_ID=
+WHATSAPP_BUSINESS_NUMBER_E164=   # e.g. 91XXXXXXXXXX (no +)
+WHATSAPP_API_BASE=https://graph.facebook.com/v21.0
+APP_BASE_URL= https://<our-domain>
+
+
+DB models
+
+orders: id (pk), user_id, payment_id, status, customer_phone_e164, total_amount, created_at, last_confirmation_sent_at (nullable).
+
+whatsapp_tokens: id (pk), order_id (fk), token (uuid v4, unique), expires_at (default now()+90d), consumed_at (nullable), created_at.
+
+webhook_events: idempotency_key (pk), processed_at.
+
+Routes
+
+POST /webhooks/payment
+
+Verify gateway signature (stub ok).
+
+Idempotent via webhook_events.
+
+On payment_succeeded: upsert order → PAID. If no last_confirmation_sent_at:
+
+Send WhatsApp template message order_confirmed with vars: OrderID, Amount, Short note.
+
+Generate uuid token; insert into whatsapp_tokens.
+
+Build forwardable link: https://wa.me/<WHATSAPP_BUSINESS_NUMBER_E164>?text=${encodeURIComponent( "Hi, I’m contacting on behalf of order " + orderId + ". Token: " + token )}
+
+(Optional shorter link) also return: https://<APP_BASE_URL>/w/invite/:token
+
+Send second WhatsApp text to customer:
+
+body: Please forward this link to your elder for direct chat: <link>
+
+Set last_confirmation_sent_at=now().
+
+Respond 200 quickly.
+
+GET /w/invite/:token
+
+Look up token; 302 redirect to the wa.me URL above (log click).
+
+WhatsApp send helpers
+
+whatsappService.sendTemplate(to, templateName, params[])
+
+whatsappService.sendText(to, text)
+Use POST /{WHATSAPP_PHONE_NUMBER_ID}/messages with Bearer WHATSAPP_TOKEN.
+
+Validation & reliability
+
+E.164 phone validation for customer_phone_e164.
+
+Retry WhatsApp on 429/5xx with backoff.
+
+No duplicate sends on webhook replay (check webhook_events + last_confirmation_sent_at).
+
+Acceptance
+
+Posting a sample payment_succeeded payload updates order → PAID, sends exactly one confirmation and one forwardable-link message, creates token, and /w/invite/:token redirects to WhatsApp with prefilled text containing the token.
+
+Deliverables
+
+Code for routes/services, DB migrations, README with setup & Postman examples.

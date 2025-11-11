@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1762701351536,
+      "tag": "0000_strong_ted_forrester",
+      "breakpoints": true
+    }
+  ]
+}

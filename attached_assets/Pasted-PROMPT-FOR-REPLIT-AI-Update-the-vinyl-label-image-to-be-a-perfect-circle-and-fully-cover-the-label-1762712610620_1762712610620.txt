@@ -1,0 +1,95 @@
+PROMPT FOR REPLIT AI — Update the vinyl label image to be a perfect circle and fully cover the label
+
+Please modify the vinyl so that the photo on the record label in the center is perfectly circular and fills the entire label area (no rectangular cropping, no gaps). Use the same cover image from the intro page for every track’s center label.
+
+What to change
+
+Vinyl component props & render
+
+In src/components/Vinyl.tsx, add a new prop:
+
+labelImageSrc?: string
+
+
+Inside the existing label element, render an <img> that fills it:
+
+<div className={clsx(styles.label)}>
+  {labelImageSrc && (
+    <img
+      src={labelImageSrc}
+      alt=""
+      className={styles.labelImg}
+      draggable={false}
+    />
+  )}
+</div>
+
+
+Pass the album cover to every Vinyl
+
+In src/components/TrackSlide.tsx, when rendering <Vinyl />, pass the album cover from the album data:
+
+import { ALBUM } from "@/tracks";
+// ...
+<Vinyl
+  isPlaying={isPlaying}
+  onToggle={togglePlay}
+  size={vinylSize}
+  labelImageSrc={ALBUM.coverSrc}
+/>
+
+
+(If ALBUM isn’t already imported here, import it from src/tracks.ts. If you keep album data higher up, alternatively pass labelImageSrc={album.coverSrc} from App.tsx.)
+
+CSS to force circular cover & full bleed
+
+In src/styles/vinyl.module.css, ensure the label is circular and clips children:
+
+.label {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  width: 34%;
+  height: 34%;
+  border-radius: 50%;
+  overflow: hidden;            /* clip to circle */
+  display: grid;
+  place-items: center;
+  /* remove any background color here if present */
+  background: none;
+}
+.labelImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;           /* fill entire circle */
+  display: block;
+  pointer-events: none;
+  user-select: none;
+  /* ensure it sits below the play button but above the disc */
+  z-index: 1;
+}
+
+
+Z-index sanity (so the play button stays on top)
+
+Still in vinyl.module.css, ensure the play button is above the label image:
+
+.playBtn {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;                  /* above .labelImg */
+}
+
+
+Acceptance criteria
+
+The center label shows the same album cover image used on the intro page.
+
+The label image is perfectly circular (no visible corners).
+
+The image fills the entire label area (no letterboxing; no empty ring).
+
+The play button still sits centered above the label image and is clickable.
+
+Only make the changes described above; keep all other behavior and styles the same.
