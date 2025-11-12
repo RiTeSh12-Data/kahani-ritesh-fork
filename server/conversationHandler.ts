@@ -40,6 +40,12 @@ export async function handleIncomingMessage(
   
   if (!trial) {
     console.log('No free trial found for phone:', fromNumber, 'Message:', messageText);
+    
+    // Send a helpful response when no trial is found
+    await sendTextMessageWithRetry(
+      fromNumber,
+      "Hi! I'm Vaani from Kahani. It looks like you haven't started a story collection yet. To get started, please ask the person who wants to preserve your stories to create a free trial and share the link with you. Once you click that link, we can begin your storytelling journey!"
+    );
     return;
   }
   
@@ -226,7 +232,7 @@ async function handleVoiceNote(trial: any, fromNumber: string, message: WhatsApp
       reminderSentAt: null,
     });
     
-    const appUrl = process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : 'http://localhost:5000';
+    const appUrl = process.env.APP_BASE_URL ? `https://${process.env.APP_BASE_URL.split(',')[0]}` : 'http://localhost:3000';
     const albumLink = `${appUrl}/albums/${trial.id}`;
     
     await sendAlbumCompletionMessage(fromNumber, albumLink);

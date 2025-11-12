@@ -53,6 +53,12 @@ export const albumQuestions: AlbumQuestions = {
     "What advice would you give about handling difficult times?",
     "What do you believe makes a relationship strong and lasting?",
     "Looking back on your life, what matters most to you now?"
+  ],
+  "Love & Relationships": [
+    "How did you know you had found the right person to spend your life with?",
+    "What is the most important lesson you've learned about love?",
+    "How has your understanding of relationships changed over the years?",
+    "What advice would you give to someone about building lasting relationships?"
   ]
 };
 

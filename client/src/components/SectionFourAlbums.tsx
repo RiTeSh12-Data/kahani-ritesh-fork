@@ -87,6 +87,19 @@ const defaultAlbums: AlbumCard[] = [
       "What do you believe makes a relationship strong and lasting?",
       "Looking back on your life, what matters most to you now?"
     ]
+  },
+  {
+    id: 4,
+    title: "Love & Relationships",
+    description: "These questions explore the bonds that matter most — the love, connections, and relationships that have shaped your heart and life.",
+    imageSrc: "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=800&q=80",
+    imageAlt: "Love & Relationships",
+    questions: [
+      "How did you know you had found the right person to spend your life with?",
+      "What is the most important lesson you've learned about love?",
+      "How has your understanding of relationships changed over the years?",
+      "What advice would you give to someone about building lasting relationships?"
+    ]
   }
 ];
 

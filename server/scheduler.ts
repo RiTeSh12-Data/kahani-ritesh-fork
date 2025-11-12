@@ -1,3 +1,4 @@
+import cron from 'node-cron';
 import { storage } from "./storage";
 import { sendTextMessageWithRetry } from "./whatsapp";
 import { getQuestionByIndex } from "@shared/albumQuestions";
@@ -126,15 +127,18 @@ export async function processScheduledTasks(): Promise<void> {
   }
 }
 
-export function startScheduler(): NodeJS.Timeout {
-  console.log('Starting background scheduler (runs every hour)');
-  console.log('NOTE: For production, use external cron job or task scheduler instead of setInterval');
+export function startScheduler(): void {
+  console.log('Starting background scheduler');
+  console.log('Scheduled tasks run every 5 minutes');
+  console.log('NOTE: For production, consider using Render Cron Jobs for better reliability');
   
-  const intervalId = setInterval(() => {
-    processScheduledTasks().catch(console.error);
-  }, 60 * 60 * 1000);
+  // Run every 5 minutes
+  // Cron format: minute hour day month weekday
+  // '*/5 * * * *' = every 5 minutes
+  cron.schedule('*/1 * * * *', async () => {
+    await processScheduledTasks().catch(console.error);
+  });
   
+  // Run immediately on startup to catch any overdue messages
   processScheduledTasks().catch(console.error);
-  
-  return intervalId;
 }

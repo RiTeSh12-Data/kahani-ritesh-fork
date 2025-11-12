@@ -35,6 +35,13 @@ const albums: Album[] = [
     imageSrc: "https://images.unsplash.com/photo-1519491050282-cf00c82424b4?w=800&q=80",
     imageAlt: "Words of Wisdom",
   },
+  {
+    id: 4,
+    title: "Love & Relationships",
+    description: "Explore the bonds that matter most — love, connections, and relationships",
+    imageSrc: "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=800&q=80",
+    imageAlt: "Love & Relationships",
+  },
 ];
 
 export default function FreeTrialCheckout() {

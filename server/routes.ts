@@ -106,9 +106,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const voiceNotes = await storage.getVoiceNotesByTrialId(trialId);
       
-      const { getQuestionByIndex } = await import("@shared/albumQuestions");
+      const { getQuestionByIndex, getTotalQuestionsForAlbum } = await import("@shared/albumQuestions");
       
-      const tracks = Array.from({ length: 15 }, (_, index) => {
+      const totalQuestions = getTotalQuestionsForAlbum(trial.selectedAlbum);
+      
+      const tracks = Array.from({ length: totalQuestions }, (_, index) => {
         const questionText = getQuestionByIndex(trial.selectedAlbum, index);
         const voiceNote = voiceNotes.find(note => note.questionIndex === index);
         
@@ -541,6 +543,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
     } catch (error: any) {
       console.error('Error processing WhatsApp webhook:', error);
+    }
+  });
+
+  // Optional: Endpoint for Render Cron Jobs or external schedulers
+  app.post("/api/internal/process-scheduled", async (req, res) => {
+    // Optional: Add auth check
+    const cronSecret = process.env.CRON_SECRET;
+    if (cronSecret && req.headers['authorization'] !== `Bearer ${cronSecret}`) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    try {
+      const { processScheduledTasks } = await import("./scheduler");
+      await processScheduledTasks();
+      res.json({ 
+        success: true, 
+        timestamp: new Date().toISOString(),
+        message: 'Scheduled tasks processed'
+      });
+    } catch (error) {
+      console.error('Error in scheduled tasks endpoint:', error);
+      res.status(500).json({ error: 'Failed to process scheduled tasks' });
     }
   });
 
