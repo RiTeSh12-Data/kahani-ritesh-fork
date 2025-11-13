@@ -55,7 +55,7 @@ export default function IntroSlide({
       <p
         style={{
           fontSize: "1.125rem",
-          color: "#aaa",
+          color: "rgba(0, 0, 0, 0.6)",
           textAlign: "center",
           marginBottom: "3rem",
         }}
@@ -68,7 +68,7 @@ export default function IntroSlide({
       <p
         style={{
           fontSize: "0.875rem",
-          color: "#666",
+          color: "rgba(0, 0, 0, 0.5)",
           textAlign: "center",
         }}
         data-testid="text-swipe-hint"
