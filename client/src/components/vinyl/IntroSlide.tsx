@@ -39,6 +39,11 @@ export function IntroSlide({
           boxShadow: "0 20px 60px rgba(0, 0, 0, 0.5)",
         }}
         data-testid="album-cover"
+        onError={(e) => {
+          console.error("Failed to load cover image:", coverSrc);
+          // Hide broken image
+          e.currentTarget.style.display = "none";
+        }}
       />
       <h1
         style={{
@@ -84,6 +89,15 @@ export function IntroSlide({
           height: "auto",
         }}
         data-testid="kahani-logo"
+        onError={(e) => {
+          console.error("Failed to load logo:", logoSrc || "default");
+          // Fallback to imported logo if provided path fails
+          if (logoSrc && e.currentTarget.src !== kahaniLogo) {
+            e.currentTarget.src = kahaniLogo;
+          } else {
+            e.currentTarget.style.display = "none";
+          }
+        }}
       />
       <style>
         {`

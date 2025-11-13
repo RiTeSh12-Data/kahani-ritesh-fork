@@ -178,7 +178,7 @@ export default function AlbumsGallery() {
       coverSrc="/attached_assets/vinyl-cover.png"
       title={trial.selectedAlbum}
       artist={trial.storytellerName}
-      logoSrc="/attached_assets/kahani-logo.svg"
+      logoSrc="/attached_assets/kahani-logo.png"
     />,
     ...tracks.map((track, trackIndex) => (
       <TrackSlide

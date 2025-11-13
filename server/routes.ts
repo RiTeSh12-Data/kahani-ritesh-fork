@@ -520,93 +520,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/webhook/whatsapp", async (req, res) => {
     try {
-      const mode = req.query["hub.mode"];
-      const token = req.query["hub.verify_token"];
-      const challenge = req.query["hub.challenge"];
-
+      const mode = req.query['hub.mode'];
+      const token = req.query['hub.verify_token'];
+      const challenge = req.query['hub.challenge'];
+      
       const verifyToken = process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN;
-
+      
       if (!verifyToken) {
-        console.error("WHATSAPP_WEBHOOK_VERIFY_TOKEN not configured");
-        return res.status(500).send("Webhook verification not configured");
+        console.error('WHATSAPP_WEBHOOK_VERIFY_TOKEN not configured');
+        return res.status(500).send('Webhook verification not configured');
       }
-
-      if (mode === "subscribe" && token === verifyToken) {
-        console.log("WhatsApp webhook verified successfully");
+      
+      if (mode === 'subscribe' && token === verifyToken) {
+        console.log('WhatsApp webhook verified successfully');
         return res.status(200).send(challenge);
       }
-
-      console.error("WhatsApp webhook verification failed:", { mode, token });
-      res.status(403).send("Forbidden");
+      
+      console.error('WhatsApp webhook verification failed:', { mode, token });
+      res.status(403).send('Forbidden');
+      
     } catch (error: any) {
-      console.error("Error verifying WhatsApp webhook:", error);
-      res.status(500).send("Internal server error");
+      console.error('Error verifying WhatsApp webhook:', error);
+      res.status(500).send('Internal server error');
     }
   });
 
   app.post("/webhook/whatsapp", async (req, res) => {
     try {
-      res.status(200).json({ status: "received" });
-
+      res.status(200).json({ status: 'received' });
+      
       const body = req.body;
-
-      if (body.object !== "whatsapp_business_account") {
-        console.log("Ignoring non-WhatsApp webhook:", body.object);
+      
+      if (body.object !== 'whatsapp_business_account') {
+        console.log('Ignoring non-WhatsApp webhook:', body.object);
         return;
       }
-
+      
       const entry = body.entry?.[0];
       if (!entry) {
-        console.log("No entry in webhook payload");
+        console.log('No entry in webhook payload');
         return;
       }
-
+      
       const changes = entry.changes?.[0];
       if (!changes) {
-        console.log("No changes in webhook payload");
+        console.log('No changes in webhook payload');
         return;
       }
-
+      
       const value = changes.value;
       if (!value) {
-        console.log("No value in webhook payload");
+        console.log('No value in webhook payload');
         return;
       }
-
+      
       const messages = value.messages;
       if (!messages || messages.length === 0) {
-        console.log("No messages in webhook payload");
+        console.log('No messages in webhook payload');
         return;
       }
-
+      
       const message = messages[0];
       const messageType = message.type;
       const fromNumber = message.from;
-
-      console.log("Received WhatsApp message:", {
+      
+      console.log('Received WhatsApp message:', {
         from: fromNumber,
         type: messageType,
       });
-
+      
       const messageIdempotencyKey = `whatsapp_msg_${message.id}`;
-      const alreadyProcessed = await storage.isWebhookProcessed(
-        messageIdempotencyKey,
-      );
-
+      const alreadyProcessed = await storage.isWebhookProcessed(messageIdempotencyKey);
+      
       if (alreadyProcessed) {
-        console.log(
-          "WhatsApp message already processed:",
-          messageIdempotencyKey,
-        );
+        console.log('WhatsApp message already processed:', messageIdempotencyKey);
         return;
       }
-
+      
       const { handleIncomingMessage } = await import("./conversationHandler");
       await handleIncomingMessage(fromNumber, message, messageType);
-
+      
       await storage.markWebhookProcessed(messageIdempotencyKey);
+      
     } catch (error: any) {
-      console.error("Error processing WhatsApp webhook:", error);
+      console.error('Error processing WhatsApp webhook:', error);
     }
   });
 
