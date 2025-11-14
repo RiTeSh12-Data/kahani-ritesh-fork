@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useRoute } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, MoreVertical, Play, Pause, Shuffle } from "lucide-react";
+import { ArrowLeft, Share2, Play, Pause, Shuffle } from "lucide-react";
 import { MiniPlayer } from "@/components/playlist/MiniPlayer";
 
 const FALLBACK_AUDIO_URL = "/audio/fallback-voice-note.mp3";
@@ -11,6 +11,24 @@ interface Track {
   questionText: string;
   mediaUrl: string | null;
   duration?: number;
+}
+
+interface AlbumData {
+  trial: {
+    id: string;
+    storytellerName: string;
+    buyerName: string;
+    selectedAlbum: string;
+  };
+  album: {
+    description: string;
+    coverImage: string;
+  };
+  tracks: Array<{
+    questionIndex: number;
+    questionText: string;
+    mediaUrl: string | null;
+  }>;
 }
 
 function formatDuration(seconds: number): string {
@@ -33,13 +51,13 @@ export default function PlaylistAlbumsGallery() {
     data: albumData,
     isLoading,
     error,
-  } = useQuery({
+  } = useQuery<AlbumData>({
     queryKey: [`/api/albums/${trialId}`],
     enabled: !!trialId,
   });
 
   const [playingTrackIndex, setPlayingTrackIndex] = useState<number | null>(
-    null,
+    null
   );
   const [isPlaying, setIsPlaying] = useState(false);
   const [durations, setDurations] = useState<Map<number, number>>(new Map());
@@ -55,20 +73,17 @@ export default function PlaylistAlbumsGallery() {
         audioRefs.current.delete(trackIndex);
       }
     },
-    [],
+    []
   );
 
   // Load duration for a track
-  const loadDuration = useCallback(
-    (trackIndex: number, audioUrl: string) => {
-      const audio = new Audio(audioUrl);
-      audio.addEventListener("loadedmetadata", () => {
-        setDurations((prev) => new Map(prev).set(trackIndex, audio.duration));
-      });
-      audio.load();
-    },
-    [],
-  );
+  const loadDuration = useCallback((trackIndex: number, audioUrl: string) => {
+    const audio = new Audio(audioUrl);
+    audio.addEventListener("loadedmetadata", () => {
+      setDurations((prev) => new Map(prev).set(trackIndex, audio.duration));
+    });
+    audio.load();
+  }, []);
 
   // Load durations for all tracks
   useEffect(() => {
@@ -141,7 +156,7 @@ export default function PlaylistAlbumsGallery() {
         currentAudioRef.current = null;
       });
     },
-    [albumData, playingTrackIndex, isPlaying],
+    [albumData, playingTrackIndex, isPlaying]
   );
 
   // Handle play button (first track)
@@ -154,9 +169,7 @@ export default function PlaylistAlbumsGallery() {
   // Handle shuffle button
   const handleShuffle = useCallback(() => {
     if (albumData?.tracks && albumData.tracks.length > 0) {
-      const randomIndex = Math.floor(
-        Math.random() * albumData.tracks.length,
-      );
+      const randomIndex = Math.floor(Math.random() * albumData.tracks.length);
       handlePlayPause(randomIndex);
     }
   }, [albumData, handlePlayPause]);
@@ -164,7 +177,7 @@ export default function PlaylistAlbumsGallery() {
   // Calculate total duration
   const totalDuration = Array.from(durations.values()).reduce(
     (sum, duration) => sum + duration,
-    0,
+    0
   );
 
   if (!trialId) {
@@ -292,6 +305,34 @@ export default function PlaylistAlbumsGallery() {
           <ArrowLeft size={24} color="#000" />
         </button>
         <button
+          onClick={async () => {
+            if (!albumData) return;
+            const url = window.location.href;
+            if (navigator.share) {
+              try {
+                await navigator.share({
+                  title: albumData.trial.selectedAlbum,
+                  text: `Check out this Kahani album: ${albumData.trial.selectedAlbum}`,
+                  url: url,
+                });
+              } catch (error) {
+                // User cancelled or error occurred
+                if (error instanceof Error && error.name !== "AbortError") {
+                  console.error("Error sharing:", error);
+                }
+              }
+            } else {
+              // Fallback: copy to clipboard
+              try {
+                await navigator.clipboard.writeText(url);
+                // You could show a toast notification here
+                alert("Link copied to clipboard!");
+              } catch (error) {
+                console.error("Failed to copy link:", error);
+                alert("Failed to copy link. Please copy manually: " + url);
+              }
+            }
+          }}
           style={{
             background: "transparent",
             border: "none",
@@ -310,9 +351,9 @@ export default function PlaylistAlbumsGallery() {
           onMouseLeave={(e) => {
             e.currentTarget.style.background = "transparent";
           }}
-          aria-label="More options"
+          aria-label="Share album"
         >
-          <MoreVertical size={24} color="#000" />
+          <Share2 size={24} color="#000" />
         </button>
       </div>
 
@@ -324,12 +365,12 @@ export default function PlaylistAlbumsGallery() {
           alt={trial.selectedAlbum}
           style={{
             width: "100%",
-            maxWidth: "400px",
+            maxWidth: "280px",
             height: "auto",
-            borderRadius: "16px",
-            margin: "1rem auto",
+            borderRadius: "12px",
+            margin: "0.75rem auto 0.5rem",
             display: "block",
-            boxShadow: "0 10px 40px rgba(0, 0, 0, 0.2)",
+            boxShadow: "0 8px 24px rgba(0, 0, 0, 0.15)",
           }}
         />
 
@@ -503,13 +544,6 @@ export default function PlaylistAlbumsGallery() {
                   padding: "0.75rem 0",
                   borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
                   cursor: "pointer",
-                  transition: "background 0.2s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
                 }}
                 onClick={() => handlePlayPause(index)}
               >
@@ -548,7 +582,9 @@ export default function PlaylistAlbumsGallery() {
                     width: "40px",
                     height: "40px",
                     borderRadius: "50%",
-                    background: isCurrentTrack ? "#A35139" : "rgba(0, 0, 0, 0.1)",
+                    background: isCurrentTrack
+                      ? "#A35139"
+                      : "rgba(0, 0, 0, 0.1)",
                     border: "none",
                     display: "flex",
                     alignItems: "center",
