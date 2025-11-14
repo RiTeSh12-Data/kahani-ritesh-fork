@@ -60,7 +60,7 @@ export function IntroSlide({
         style={{
           fontSize: "clamp(1rem, 3vw, 1.25rem)",
           color: "rgba(0, 0, 0, 0.6)",
-          marginBottom: "3rem",
+          marginBottom: "1rem",
           textAlign: "center",
         }}
         data-testid="album-artist"
@@ -72,6 +72,7 @@ export function IntroSlide({
           fontSize: "0.875rem",
           color: "rgba(0, 0, 0, 0.5)",
           animation: "fadeInOut 2s ease-in-out infinite",
+          marginBottom: "1rem",
         }}
         data-testid="swipe-hint"
       >

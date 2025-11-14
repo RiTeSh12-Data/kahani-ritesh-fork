@@ -102,7 +102,7 @@ function App() {
           <Route path="/affiliate" component={Affiliate} />
           <Route path="/contact-us" component={ContactUs} />
           <Route path="/blogs" component={Blogs} />
-          <Route path="/albums/:trialId" component={AlbumsGallery} />
+          <Route path="/vinyl-albums/:trialId" component={AlbumsGallery} />
           <Route path="/all-albums" component={AllAlbums} />
           <Route path="/vinyl-gallery" component={VinylGallery} />
           <Route component={NotFound} />

@@ -11,7 +11,7 @@ const FALLBACK_AUDIO_URL = "/audio/fallback-voice-note.mp3";
 
 export default function AlbumsGallery() {
   const [, setLocation] = useLocation();
-  const [match, params] = useRoute("/albums/:trialId");
+  const [match, params] = useRoute("/vinyl-albums/:trialId");
   const trialId = params?.trialId || "";
 
   const {
