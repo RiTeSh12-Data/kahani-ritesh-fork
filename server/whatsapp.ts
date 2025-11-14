@@ -472,9 +472,7 @@ export async function sendAlbumCompletionMessage(
   }
 }
 
-export async function downloadVoiceNoteMedia(
-  mediaId: string,
-): Promise<{
+export async function downloadVoiceNoteMedia(mediaId: string): Promise<{
   url: string;
   mimeType: string;
   sha256: string;

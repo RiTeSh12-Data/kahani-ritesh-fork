@@ -1,0 +1,256 @@
+import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Loader2,
+  Share2,
+  Copy,
+  Mail,
+  MessageCircle,
+  ArrowLeft,
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import SimpleHeader from "@/components/SimpleHeader";
+import { Footer } from "@/components/Footer";
+import type { AlbumCard } from "@/components/SectionFourAlbums";
+
+export default function AllAlbums() {
+  const { toast } = useToast();
+  const [, setLocation] = useLocation();
+
+  const {
+    data: albums,
+    isLoading,
+    error,
+  } = useQuery<AlbumCard[]>({
+    queryKey: ["/api/albums"],
+  });
+
+  const getShareUrl = (albumId: string) => {
+    return `${window.location.origin}/free-trial?albumId=${encodeURIComponent(
+      albumId,
+    )}`;
+  };
+
+  const handleCopyLink = async (albumId: string, albumTitle: string) => {
+    const url = getShareUrl(albumId);
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({
+        title: "Link copied!",
+        description: `${albumTitle} link copied to clipboard.`,
+      });
+    } catch (err) {
+      toast({
+        title: "Failed to copy",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleShareWhatsApp = (albumId: string, albumTitle: string) => {
+    const url = getShareUrl(albumId);
+    const message = `Check out this Kahani album: ${albumTitle}\n\n${url}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+  };
+
+  const handleShareEmail = (albumId: string, albumTitle: string) => {
+    const url = getShareUrl(albumId);
+    const subject = `Check out this Kahani album: ${albumTitle}`;
+    const body = `I found this interesting Kahani album that you might like:\n\n${albumTitle}\n\n${url}`;
+    window.location.href = `mailto:?subject=${encodeURIComponent(
+      subject,
+    )}&body=${encodeURIComponent(body)}`;
+  };
+
+  const handleNativeShare = async (albumId: string, albumTitle: string) => {
+    const url = getShareUrl(albumId);
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({
+          title: `Kahani Album: ${albumTitle}`,
+          text: `Check out this Kahani album: ${albumTitle}`,
+          url: url,
+        });
+      } catch (err) {
+        // User cancelled or error occurred
+        if ((err as Error).name !== "AbortError") {
+          toast({
+            title: "Share failed",
+            description: "Please try another sharing method.",
+            variant: "destructive",
+          });
+        }
+      }
+    }
+  };
+
+  return (
+    <div className="w-full min-h-screen bg-[#EEE9DF]">
+      <SimpleHeader />
+
+      <section className="w-full px-4 sm:px-6 py-12 sm:py-16">
+        <div className="max-w-7xl mx-auto space-y-8 sm:space-y-10">
+          {/* Back Button */}
+          {/* <div className="flex justify-start mb-4">
+            <Button
+              onClick={() => setLocation("/")}
+              variant="ghost"
+              className="text-[#A35139] hover:text-[#8B4229] hover:bg-[#A35139]/10"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Home
+            </Button>
+          </div> */}
+
+          {/* Header */}
+          <div className="text-center space-y-4">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[#1B2632] font-['Outfit']">
+              All Albums
+            </h1>
+            <p className="text-lg text-[#1B2632]/70 max-w-2xl mx-auto">
+              Explore our complete collection of Kahani albums
+            </p>
+          </div>
+
+          {/* Loading State */}
+          {isLoading && (
+            <div className="flex items-center justify-center min-h-[400px]">
+              <Loader2 className="h-8 w-8 animate-spin text-[#A35139]" />
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && (
+            <div className="text-center py-12">
+              <p className="text-[#1B2632]/70 text-lg">
+                Failed to load albums. Please try again later.
+              </p>
+            </div>
+          )}
+
+          {/* Albums Grid */}
+          {albums && albums.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+              {albums.map((album) => (
+                <div
+                  key={album.id}
+                  className="bg-white rounded-2xl shadow-lg overflow-hidden relative hover:shadow-xl transition-shadow duration-300"
+                  data-testid={`album-${album.id}`}
+                >
+                  {/* Share Icon - Top Right */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        className="absolute top-4 right-4 z-10 p-2 bg-white/90 hover:bg-white rounded-full shadow-md transition-all duration-200 hover:scale-110"
+                        aria-label={`Share ${album.title} album`}
+                        data-testid={`share-album-${album.id}`}
+                      >
+                        <Share2 className="h-5 w-5 text-[#A35139]" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem
+                        onClick={() => handleCopyLink(album.id, album.title)}
+                        className="cursor-pointer"
+                      >
+                        <Copy className="mr-2 h-4 w-4" />
+                        Copy link
+                      </DropdownMenuItem>
+                      {typeof navigator.share === "function" && (
+                        <DropdownMenuItem
+                          onClick={() =>
+                            handleNativeShare(album.id, album.title)
+                          }
+                          className="cursor-pointer"
+                        >
+                          <Share2 className="mr-2 h-4 w-4" />
+                          Share...
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem
+                        onClick={() =>
+                          handleShareWhatsApp(album.id, album.title)
+                        }
+                        className="cursor-pointer"
+                      >
+                        <MessageCircle className="mr-2 h-4 w-4" />
+                        Share on WhatsApp
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleShareEmail(album.id, album.title)}
+                        className="cursor-pointer"
+                      >
+                        <Mail className="mr-2 h-4 w-4" />
+                        Share via Email
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  {/* Cover Image */}
+                  <div className="w-full aspect-video bg-[#C9C1B1]/30 overflow-hidden">
+                    <img
+                      src={album.cover_image}
+                      alt={album.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-5 sm:p-6 space-y-4">
+                    <h3 className="text-xl sm:text-2xl font-bold text-[#1B2632] font-['Outfit'] pr-10">
+                      {album.title}
+                    </h3>
+                    <p className="text-[#1B2632]/70 leading-relaxed text-sm sm:text-base line-clamp-3">
+                      {album.description}
+                    </p>
+
+                    {/* Questions Preview */}
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-semibold text-[#1B2632]/80 uppercase tracking-wide">
+                        Questions
+                      </h4>
+                      <ul className="space-y-2">
+                        {album.questions.slice(0, 2).map((question, index) => (
+                          <li
+                            key={index}
+                            className="text-[#1B2632]/70 text-sm leading-relaxed pl-4 border-l-2 border-[#A35139]/30"
+                          >
+                            {question}
+                          </li>
+                        ))}
+                      </ul>
+                      {album.questions.length > 2 && (
+                        <p className="text-[#A35139] text-sm font-semibold pl-4">
+                          +{album.questions.length - 2} more questions
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Empty State */}
+          {albums && albums.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-[#1B2632]/70 text-lg">
+                No albums available at the moment.
+              </p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <Footer />
+    </div>
+  );
+}

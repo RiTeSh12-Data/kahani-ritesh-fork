@@ -65,7 +65,10 @@ export interface IStorage {
   getAllAlbums(): Promise<AlbumRow[]>;
   getAlbumByTitle(title: string): Promise<AlbumRow | undefined>;
   getAlbumById(id: string): Promise<AlbumRow | undefined>;
-  getQuestionByIndex(albumId: string, index: number): Promise<string | undefined>;
+  getQuestionByIndex(
+    albumId: string,
+    index: number,
+  ): Promise<string | undefined>;
   getTotalQuestionsForAlbum(albumId: string): Promise<number>;
 }
 
@@ -531,7 +534,10 @@ export class DatabaseStorage implements IStorage {
       return allAlbums;
     } catch (error: any) {
       // If table doesn't exist, return empty array with helpful error message
-      if (error?.message?.includes("does not exist") || error?.code === "42P01") {
+      if (
+        error?.message?.includes("does not exist") ||
+        error?.code === "42P01"
+      ) {
         console.error(
           "Albums table does not exist. Please run the migration: npm run db:push or apply migrations/0001_add_albums.sql manually",
         );

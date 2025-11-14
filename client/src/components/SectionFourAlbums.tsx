@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,6 +14,7 @@ import {
   Copy,
   Mail,
   MessageCircle,
+  ArrowRight,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -34,6 +36,7 @@ export default function SectionFourAlbums({
   onTryDemo,
 }: SectionFourAlbumsProps) {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const {
     data: fetchedAlbums,
     isLoading,
@@ -44,11 +47,13 @@ export default function SectionFourAlbums({
   });
 
   // Use prop albums if provided, otherwise use fetched albums
-  const albums = propAlbums || fetchedAlbums || [];
+  const allAlbums = propAlbums || fetchedAlbums || [];
+  // Show only first 4 albums
+  const albums = allAlbums.slice(0, 4);
 
   const getShareUrl = (albumId: string) => {
     return `${window.location.origin}/free-trial?albumId=${encodeURIComponent(
-      albumId
+      albumId,
     )}`;
   };
 
@@ -80,7 +85,7 @@ export default function SectionFourAlbums({
     const subject = `Check out this Kahani album: ${albumTitle}`;
     const body = `I found this interesting Kahani album that you might like:\n\n${albumTitle}\n\n${url}`;
     window.location.href = `mailto:?subject=${encodeURIComponent(
-      subject
+      subject,
     )}&body=${encodeURIComponent(body)}`;
   };
 
@@ -244,6 +249,38 @@ export default function SectionFourAlbums({
                 </div>
               </div>
             ))}
+
+            {/* View All Albums CTA - Right side of 4th album */}
+            {allAlbums && allAlbums.length > 0 && (
+              <div
+                className="flex-shrink-0 w-[85vw] max-w-[500px] bg-white rounded-2xl shadow-lg overflow-hidden relative"
+                style={{ scrollSnapAlign: "start" }}
+                data-testid="cta-view-all-albums"
+              >
+                <div className="p-5 sm:p-6 h-full min-h-[600px] flex flex-col items-center justify-center space-y-4 sm:space-y-6 text-center">
+                  <div className="w-full aspect-video bg-gradient-to-br from-[#A35139]/10 to-[#C9C1B1]/30 rounded-xl flex items-center justify-center mb-4">
+                    <ArrowRight className="h-16 w-16 text-[#A35139]/40" />
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-bold text-[#1B2632] font-['Outfit']">
+                    Explore More
+                  </h3>
+                  <p className="text-[#1B2632]/70 text-sm sm:text-base leading-relaxed px-4">
+                    {allAlbums.length > 4
+                      ? `View all ${allAlbums.length} albums in our collection`
+                      : "View all albums in our collection"}
+                  </p>
+                  <Button
+                    onClick={() => setLocation("/all-albums")}
+                    className="px-6 py-3 bg-[#A35139] text-white border-[#A35139] rounded-xl font-semibold text-base shadow-lg hover:bg-[#8B4229] transition-colors mt-4"
+                    size="lg"
+                    data-testid="button-view-all-albums"
+                  >
+                    View All Albums
+                    <ArrowRight className="h-5 w-5 ml-2" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

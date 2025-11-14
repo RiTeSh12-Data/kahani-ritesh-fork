@@ -98,76 +98,76 @@ export default function Checkout() {
         {albums && albums.length > 0 && (
           <div className="space-y-6">
             {albums.map((album) => (
-            <Card
-              key={album.id}
-              className="overflow-hidden shadow-lg"
-              data-testid={`album-card-${album.id}`}
-            >
-              <CardContent className="p-0">
-                {/* Album Image */}
-                <div className="relative h-48 sm:h-64 w-full overflow-hidden">
-                  <img
-                    src={album.cover_image}
-                    alt={album.title}
-                    className="w-full h-full object-cover"
-                    data-testid={`album-image-${album.id}`}
-                  />
-                </div>
-
-                {/* Album Content */}
-                <div className="p-6 sm:p-8">
-                  {/* Title and Description */}
-                  <div className="mb-6">
-                    <h2
-                      className="text-2xl sm:text-3xl font-bold text-[#1B2632] mb-3"
-                      data-testid={`album-title-${album.id}`}
-                    >
-                      {album.title}
-                    </h2>
-                    <p
-                      className="text-[#1B2632]/70 text-base sm:text-lg leading-relaxed"
-                      data-testid={`album-description-${album.id}`}
-                    >
-                      {album.description}
-                    </p>
+              <Card
+                key={album.id}
+                className="overflow-hidden shadow-lg"
+                data-testid={`album-card-${album.id}`}
+              >
+                <CardContent className="p-0">
+                  {/* Album Image */}
+                  <div className="relative h-48 sm:h-64 w-full overflow-hidden">
+                    <img
+                      src={album.cover_image}
+                      alt={album.title}
+                      className="w-full h-full object-cover"
+                      data-testid={`album-image-${album.id}`}
+                    />
                   </div>
 
-                  {/* Quantity Controls */}
-                  <div className="flex items-center gap-4">
-                    <span className="text-[#1B2632]/70 font-medium">
-                      Quantity:
-                    </span>
-                    <div className="flex items-center gap-3">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleQuantityChange(album.id, -1)}
-                        disabled={quantities[album.id] <= 1}
-                        className="rounded-full"
-                        data-testid={`button-decrease-${album.id}`}
+                  {/* Album Content */}
+                  <div className="p-6 sm:p-8">
+                    {/* Title and Description */}
+                    <div className="mb-6">
+                      <h2
+                        className="text-2xl sm:text-3xl font-bold text-[#1B2632] mb-3"
+                        data-testid={`album-title-${album.id}`}
                       >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      <span
-                        className="text-xl font-bold text-[#1B2632] min-w-[3ch] text-center"
-                        data-testid={`quantity-${album.id}`}
+                        {album.title}
+                      </h2>
+                      <p
+                        className="text-[#1B2632]/70 text-base sm:text-lg leading-relaxed"
+                        data-testid={`album-description-${album.id}`}
                       >
-                        {quantities[album.id]}
+                        {album.description}
+                      </p>
+                    </div>
+
+                    {/* Quantity Controls */}
+                    <div className="flex items-center gap-4">
+                      <span className="text-[#1B2632]/70 font-medium">
+                        Quantity:
                       </span>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleQuantityChange(album.id, 1)}
-                        className="rounded-full"
-                        data-testid={`button-increase-${album.id}`}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-3">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handleQuantityChange(album.id, -1)}
+                          disabled={quantities[album.id] <= 1}
+                          className="rounded-full"
+                          data-testid={`button-decrease-${album.id}`}
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <span
+                          className="text-xl font-bold text-[#1B2632] min-w-[3ch] text-center"
+                          data-testid={`quantity-${album.id}`}
+                        >
+                          {quantities[album.id]}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handleQuantityChange(album.id, 1)}
+                          className="rounded-full"
+                          data-testid={`button-increase-${album.id}`}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
             ))}
           </div>
         )}
@@ -184,23 +184,23 @@ export default function Checkout() {
 
             {/* Single Action Buttons */}
             <div className="mt-8 flex flex-col sm:flex-row gap-4">
-          <Button
-            size="lg"
-            className="flex-1 bg-[#1B2632] text-[#EEE9DF] rounded-2xl shadow-xl border border-[#1B2632]"
-            onClick={handleBuyNow}
-            data-testid="button-buy-now"
-          >
-            Buy Now
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            className="flex-1 border-2 border-[#A35139] text-[#A35139] rounded-2xl"
-            onClick={handleFreeTrial}
-            data-testid="button-free-trial"
-          >
-            Start Free Trial
-          </Button>
+              <Button
+                size="lg"
+                className="flex-1 bg-[#1B2632] text-[#EEE9DF] rounded-2xl shadow-xl border border-[#1B2632]"
+                onClick={handleBuyNow}
+                data-testid="button-buy-now"
+              >
+                Buy Now
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="flex-1 border-2 border-[#A35139] text-[#A35139] rounded-2xl"
+                onClick={handleFreeTrial}
+                data-testid="button-free-trial"
+              >
+                Start Free Trial
+              </Button>
             </div>
           </>
         )}

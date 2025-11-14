@@ -27,6 +27,7 @@ import ContactUs from "@/pages/ContactUs";
 import Blogs from "@/pages/Blogs";
 import AlbumsGallery from "@/pages/AlbumsGallery";
 import VinylGallery from "@/pages/VinylGallery";
+import AllAlbums from "@/pages/AllAlbums";
 import NotFound from "@/pages/not-found";
 
 function HomePage() {
@@ -102,6 +103,7 @@ function App() {
           <Route path="/contact-us" component={ContactUs} />
           <Route path="/blogs" component={Blogs} />
           <Route path="/albums/:trialId" component={AlbumsGallery} />
+          <Route path="/all-albums" component={AllAlbums} />
           <Route path="/vinyl-gallery" component={VinylGallery} />
           <Route component={NotFound} />
         </Switch>

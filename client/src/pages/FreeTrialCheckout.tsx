@@ -88,82 +88,82 @@ export default function FreeTrialCheckout() {
         {albums && albums.length > 0 && (
           <div className="space-y-6">
             {albums.map((album) => {
-            const isSelected = selectedAlbumId === album.id;
+              const isSelected = selectedAlbumId === album.id;
 
-            return (
-              <Card
-                key={album.id}
-                className={`overflow-hidden shadow-lg cursor-pointer transition-all ${
-                  isSelected
-                    ? "ring-4 ring-[#A35139] ring-opacity-50"
-                    : "hover-elevate"
-                }`}
-                onClick={() => setSelectedAlbumId(album.id)}
-                data-testid={`album-card-${album.id}`}
-              >
-                <CardContent className="p-0">
-                  {/* Album Image */}
-                  <div className="relative h-48 sm:h-64 w-full overflow-hidden">
-                    <img
-                      src={album.cover_image}
-                      alt={album.title}
-                      className="w-full h-full object-cover"
-                      data-testid={`album-image-${album.id}`}
-                    />
-                    {isSelected && (
-                      <div className="absolute inset-0 bg-[#A35139]/20 flex items-center justify-center">
-                        <div className="bg-[#A35139] text-white rounded-full p-3">
-                          <Check
-                            className="h-8 w-8"
-                            data-testid={`selected-check-${album.id}`}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Album Content */}
-                  <div className="p-6 sm:p-8">
-                    {/* Title and Description */}
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <h2
-                          className="text-2xl sm:text-3xl font-bold text-[#1B2632] mb-3"
-                          data-testid={`album-title-${album.id}`}
-                        >
-                          {album.title}
-                        </h2>
-                        <p
-                          className="text-[#1B2632]/70 text-base sm:text-lg leading-relaxed"
-                          data-testid={`album-description-${album.id}`}
-                        >
-                          {album.description}
-                        </p>
-                      </div>
+              return (
+                <Card
+                  key={album.id}
+                  className={`overflow-hidden shadow-lg cursor-pointer transition-all ${
+                    isSelected
+                      ? "ring-4 ring-[#A35139] ring-opacity-50"
+                      : "hover-elevate"
+                  }`}
+                  onClick={() => setSelectedAlbumId(album.id)}
+                  data-testid={`album-card-${album.id}`}
+                >
+                  <CardContent className="p-0">
+                    {/* Album Image */}
+                    <div className="relative h-48 sm:h-64 w-full overflow-hidden">
+                      <img
+                        src={album.cover_image}
+                        alt={album.title}
+                        className="w-full h-full object-cover"
+                        data-testid={`album-image-${album.id}`}
+                      />
                       {isSelected && (
-                        <div className="flex-shrink-0">
-                          <div className="bg-[#A35139] text-white rounded-full p-2">
-                            <Check className="h-5 w-5" />
+                        <div className="absolute inset-0 bg-[#A35139]/20 flex items-center justify-center">
+                          <div className="bg-[#A35139] text-white rounded-full p-3">
+                            <Check
+                              className="h-8 w-8"
+                              data-testid={`selected-check-${album.id}`}
+                            />
                           </div>
                         </div>
                       )}
                     </div>
 
-                    {/* Quantity Display (Fixed at 1) */}
-                    <div className="mt-4 flex items-center gap-2 text-[#1B2632]/70">
-                      <span className="font-medium">Quantity:</span>
-                      <span
-                        className="text-xl font-bold text-[#1B2632]"
-                        data-testid={`quantity-${album.id}`}
-                      >
-                        1
-                      </span>
-                      <span className="text-sm">(Free Trial)</span>
+                    {/* Album Content */}
+                    <div className="p-6 sm:p-8">
+                      {/* Title and Description */}
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <h2
+                            className="text-2xl sm:text-3xl font-bold text-[#1B2632] mb-3"
+                            data-testid={`album-title-${album.id}`}
+                          >
+                            {album.title}
+                          </h2>
+                          <p
+                            className="text-[#1B2632]/70 text-base sm:text-lg leading-relaxed"
+                            data-testid={`album-description-${album.id}`}
+                          >
+                            {album.description}
+                          </p>
+                        </div>
+                        {isSelected && (
+                          <div className="flex-shrink-0">
+                            <div className="bg-[#A35139] text-white rounded-full p-2">
+                              <Check className="h-5 w-5" />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Quantity Display (Fixed at 1) */}
+                      <div className="mt-4 flex items-center gap-2 text-[#1B2632]/70">
+                        <span className="font-medium">Quantity:</span>
+                        <span
+                          className="text-xl font-bold text-[#1B2632]"
+                          data-testid={`quantity-${album.id}`}
+                        >
+                          1
+                        </span>
+                        <span className="text-sm">(Free Trial)</span>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
+                  </CardContent>
+                </Card>
+              );
             })}
           </div>
         )}
@@ -173,29 +173,29 @@ export default function FreeTrialCheckout() {
             {/* Info Section */}
             <div className="mt-8 p-6 bg-[#EEE9DF]/50 rounded-2xl">
               <p className="text-center text-[#1B2632]/70 text-sm sm:text-base">
-                Each album contains thoughtfully crafted questions. Select one to
-                experience our story preservation service.
+                Each album contains thoughtfully crafted questions. Select one
+                to experience our story preservation service.
               </p>
             </div>
 
             {/* Start Free Trial Button */}
             <div className="mt-8">
-          <Button
-            size="lg"
-            className="w-full bg-[#A35139] text-white rounded-2xl shadow-xl border border-[#A35139] disabled:opacity-50"
-            onClick={handleStartTrial}
-            disabled={selectedAlbumId === null}
-            data-testid="button-start-free-trial"
-          >
-            {selectedAlbumId === null
-              ? "Select an Album to Continue"
-              : "Start Free Trial"}
-          </Button>
-          {selectedAlbumId === null && (
-            <p className="text-center text-[#1B2632]/50 text-sm mt-3">
-              Please select one album above to start your free trial
-            </p>
-          )}
+              <Button
+                size="lg"
+                className="w-full bg-[#A35139] text-white rounded-2xl shadow-xl border border-[#A35139] disabled:opacity-50"
+                onClick={handleStartTrial}
+                disabled={selectedAlbumId === null}
+                data-testid="button-start-free-trial"
+              >
+                {selectedAlbumId === null
+                  ? "Select an Album to Continue"
+                  : "Start Free Trial"}
+              </Button>
+              {selectedAlbumId === null && (
+                <p className="text-center text-[#1B2632]/50 text-sm mt-3">
+                  Please select one album above to start your free trial
+                </p>
+              )}
             </div>
           </>
         )}
