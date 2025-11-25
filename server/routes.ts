@@ -564,72 +564,218 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/webhook/whatsapp", async (req, res) => {
     try {
-      const mode = req.query["hub.mode"];
-      const token = req.query["hub.verify_token"];
-      const challenge = req.query["hub.challenge"];
-
-      const verifyToken = process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN;
-
-      if (!verifyToken) {
-        console.error("WHATSAPP_WEBHOOK_VERIFY_TOKEN not configured");
-        return res.status(500).send("Webhook verification not configured");
-      }
-
-      if (mode === "subscribe" && token === verifyToken) {
-        console.log("WhatsApp webhook verified successfully");
-        return res.status(200).send(challenge);
-      }
-
-      console.error("WhatsApp webhook verification failed:", { mode, token });
-      res.status(403).send("Forbidden");
+      // Twilio webhook verification (optional - can use signature verification on POST instead)
+      // For GET requests, Twilio may send a simple verification
+      // Return 200 OK to confirm webhook URL is accessible
+      console.log("Twilio webhook GET request received");
+      res.status(200).send("OK");
     } catch (error: any) {
-      console.error("Error verifying WhatsApp webhook:", error);
+      console.error("Error verifying Twilio webhook:", error);
       res.status(500).send("Internal server error");
+    }
+  });
+
+  app.get("/webhook/whatsapp/test", async (req, res) => {
+    try {
+      const protocol = req.protocol || "https";
+      const host = req.get("host") || "unknown";
+      const webhookUrl = `${protocol}://${host}/webhook/whatsapp`;
+      const authToken = process.env.TWILIO_AUTH_TOKEN;
+      const accountSid = process.env.TWILIO_ACCOUNT_SID;
+      const whatsappNumber = process.env.TWILIO_WHATSAPP_NUMBER;
+
+      // Get ngrok URL if available
+      let ngrokUrl = null;
+      try {
+        const ngrokResponse = await fetch("http://localhost:4040/api/tunnels");
+        if (ngrokResponse.ok) {
+          const ngrokData = await ngrokResponse.json();
+          if (ngrokData.tunnels && ngrokData.tunnels.length > 0) {
+            ngrokUrl = ngrokData.tunnels[0].public_url;
+          }
+        }
+      } catch (error) {
+        // ngrok not running or not accessible
+      }
+
+      const testInfo = {
+        status: "Webhook Test Endpoint",
+        currentUrl: webhookUrl,
+        ngrokUrl: ngrokUrl || "Not detected (ngrok may not be running)",
+        configuration: {
+          twilioAuthToken: authToken ? "✅ Configured" : "❌ Missing (TWILIO_AUTH_TOKEN)",
+          twilioAccountSid: accountSid ? "✅ Configured" : "❌ Missing (TWILIO_ACCOUNT_SID)",
+          twilioWhatsappNumber: whatsappNumber ? "✅ Configured" : "❌ Missing (TWILIO_WHATSAPP_NUMBER)",
+        },
+        instructions: {
+          step1: "Ensure your ngrok URL matches the one configured in Twilio Console",
+          step2: "Configure webhook URL in Twilio: " + (ngrokUrl ? `${ngrokUrl}/webhook/whatsapp` : webhookUrl),
+          step3: "Set 'When a message comes in' to POST method",
+          step4: "Set 'Status callback URL' to GET method (optional)",
+          step5: "Send a test message from WhatsApp to verify",
+        },
+        troubleshooting: {
+          invalidSignature: "If you see 'Invalid Twilio signature' error:",
+          check1: "1. Verify TWILIO_AUTH_TOKEN matches your Twilio Console Auth Token",
+          check2: "2. Ensure the webhook URL in Twilio exactly matches: " + (ngrokUrl ? `${ngrokUrl}/webhook/whatsapp` : webhookUrl),
+          check3: "3. Check server logs for detailed validation debug info",
+          check4: "4. Make sure ngrok is running and URL hasn't changed",
+        },
+      };
+
+      res.status(200).json(testInfo);
+    } catch (error: any) {
+      console.error("Error in webhook test endpoint:", error);
+      res.status(500).json({
+        error: "Internal server error",
+        message: error?.message || "Unknown error",
+      });
     }
   });
 
   app.post("/webhook/whatsapp", async (req, res) => {
     try {
+      // Verify Twilio signature (recommended for production)
+      const twilioSignature = req.headers["x-twilio-signature"] as string;
+      const authToken = process.env.TWILIO_AUTH_TOKEN;
+      
+      // Construct URL exactly as Twilio expects it
+      // Use req.originalUrl to preserve the exact path (including query params if any)
+      // Ensure no trailing slash issues
+      const protocol = req.protocol || "https";
+      const host = req.get("host") || "";
+      const path = req.originalUrl || req.url;
+      const url = `${protocol}://${host}${path}`;
+
+      // Debug logging for signature validation
+      console.log("Twilio webhook signature validation:", {
+        hasAuthToken: !!authToken,
+        hasSignature: !!twilioSignature,
+        url: url,
+        protocol: req.protocol,
+        host: req.get("host"),
+        originalUrl: req.originalUrl,
+        bodyKeys: Object.keys(req.body || {}),
+        contentType: req.get("content-type"),
+      });
+
+      if (authToken && twilioSignature) {
+        // Twilio signature validation
+        // Note: For ESM, we use the webhook utility from twilio
+        const twilioModule = await import("twilio");
+        const twilio = twilioModule.default || twilioModule;
+        
+        // Use Twilio's validateRequest function
+        // This validates the X-Twilio-Signature header
+        // Twilio sends form-encoded data, so req.body should contain the form params
+        let isValid = false;
+        try {
+          // Twilio's validateRequest signature: (authToken, signature, url, params)
+          // The params should be the form-encoded body as an object
+          isValid = twilio.validateRequest(
+            authToken,
+            twilioSignature,
+            url,
+            req.body,
+          );
+          
+          console.log("Twilio signature validation result:", isValid);
+        } catch (error: any) {
+          console.error("Error validating Twilio signature:", {
+            error: error?.message || error,
+            stack: error?.stack,
+          });
+          isValid = false;
+        }
+
+        if (!isValid) {
+          console.error("Invalid Twilio signature - Request details:", {
+            url: url,
+            urlInTwilio: "Check Twilio Console webhook URL",
+            authTokenPresent: !!authToken,
+            signaturePresent: !!twilioSignature,
+            bodyParamCount: Object.keys(req.body || {}).length,
+            bodyParamKeys: Object.keys(req.body || {}),
+            // Log first few body values (non-sensitive) for debugging
+            sampleBodyValues: Object.entries(req.body || {})
+              .slice(0, 3)
+              .reduce((acc, [key, value]) => {
+                acc[key] = typeof value === "string" && value.length > 50 
+                  ? value.substring(0, 50) + "..." 
+                  : value;
+                return acc;
+              }, {} as Record<string, any>),
+          });
+          
+          // In development, allow the request through but log the issue
+          // In production, block invalid signatures
+          if (process.env.NODE_ENV === "production") {
+            return res.status(403).send("Forbidden");
+          } else {
+            console.warn("⚠️  DEVELOPMENT MODE: Allowing request despite invalid signature");
+          }
+        } else {
+          console.log("✅ Twilio signature verified successfully");
+        }
+      } else {
+        // Development mode: log warning if signature verification not available
+        if (!authToken) {
+          console.warn("⚠️  TWILIO_AUTH_TOKEN not configured - skipping signature verification");
+        }
+        if (!twilioSignature) {
+          console.warn("⚠️  X-Twilio-Signature header missing - skipping signature verification");
+        }
+        if (process.env.NODE_ENV === "production") {
+          console.warn(
+            "⚠️  PRODUCTION MODE: Twilio signature verification not configured",
+          );
+        }
+      }
+
+      // Respond immediately to Twilio
       res.status(200).json({ status: "received" });
 
       const body = req.body;
 
-      if (body.object !== "whatsapp_business_account") {
-        console.log("Ignoring non-WhatsApp webhook:", body.object);
+      // Twilio webhook format: From, To, Body, MediaUrl0, MediaContentType0, etc.
+      const fromNumber = body.From;
+      if (!fromNumber) {
+        console.log("No From number in Twilio webhook payload");
         return;
       }
 
-      const entry = body.entry?.[0];
-      if (!entry) {
-        console.log("No entry in webhook payload");
-        return;
+      // Extract phone number (remove whatsapp: prefix if present)
+      const cleanFromNumber = fromNumber.replace(/^whatsapp:/, "").replace(/^\+/, "");
+
+      // Determine message type
+      let messageType = "text";
+      if (body.MediaUrl0) {
+        messageType = "audio"; // Assuming audio for voice notes
       }
 
-      const changes = entry.changes?.[0];
-      if (!changes) {
-        console.log("No changes in webhook payload");
-        return;
-      }
-
-      const value = changes.value;
-      if (!value) {
-        console.log("No value in webhook payload");
-        return;
-      }
-
-      const messages = value.messages;
-      if (!messages || messages.length === 0) {
-        console.log("No messages in webhook payload");
-        return;
-      }
-
-      const message = messages[0];
-      const messageType = message.type;
-      const fromNumber = message.from;
-
-      console.log("Received WhatsApp message:", {
-        from: fromNumber,
+      // Build message object compatible with conversationHandler
+      const message = {
+        id: body.MessageSid || body.SmsSid || `twilio_${Date.now()}`,
+        from: cleanFromNumber,
         type: messageType,
+        text: body.Body ? { body: body.Body } : undefined,
+        audio: body.MediaUrl0
+          ? {
+              id: body.MediaUrl0, // Use MediaUrl0 as the media identifier
+              mime_type: body.MediaContentType0 || "audio/ogg",
+            }
+          : undefined,
+        // Store Twilio-specific fields for media download
+        MediaUrl0: body.MediaUrl0,
+        MediaContentType0: body.MediaContentType0,
+        NumMedia: body.NumMedia || "0",
+      };
+
+      console.log("Received Twilio WhatsApp message:", {
+        from: cleanFromNumber,
+        type: messageType,
+        messageId: message.id,
+        hasMedia: !!body.MediaUrl0,
       });
 
       const messageIdempotencyKey = `whatsapp_msg_${message.id}`;
@@ -646,11 +792,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { handleIncomingMessage } = await import("./conversationHandler");
-      await handleIncomingMessage(fromNumber, message, messageType);
+      await handleIncomingMessage(cleanFromNumber, message, messageType);
 
       await storage.markWebhookProcessed(messageIdempotencyKey);
     } catch (error: any) {
-      console.error("Error processing WhatsApp webhook:", error);
+      console.error("Error processing Twilio WhatsApp webhook:", error);
     }
   });
 

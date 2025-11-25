@@ -16,6 +16,10 @@ interface WhatsAppMessage {
   type: string;
   text?: { body: string };
   audio?: { id: string; mime_type: string };
+  // Twilio-specific fields
+  MediaUrl0?: string;
+  MediaContentType0?: string;
+  NumMedia?: string;
 }
 
 export async function handleIncomingMessage(
@@ -207,13 +211,14 @@ async function handleVoiceNote(
   fromNumber: string,
   message: WhatsAppMessage,
 ): Promise<void> {
-  if (!message.audio || !message.audio.id) {
+  // Support both Meta format (audio.id) and Twilio format (MediaUrl0)
+  const audioId = message.audio?.id || message.MediaUrl0;
+  const mimeType = message.audio?.mime_type || message.MediaContentType0;
+
+  if (!audioId) {
     console.error("Invalid voice note message - missing audio data");
     return;
   }
-
-  const audioId = message.audio.id;
-  const mimeType = message.audio.mime_type;
 
   const currentQuestion = await storage.getQuestionByIndex(
     trial.selectedAlbum,
@@ -308,31 +313,46 @@ async function downloadAndStoreVoiceNote(
   mimeType: string,
 ): Promise<void> {
   try {
-    // Step 1: Get media info (URL) from WhatsApp
-    const mediaInfo = await downloadVoiceNoteMedia(mediaId);
+    // For Twilio: mediaId is already a direct URL (MediaUrl0)
+    // For Meta: we need to get media info first, then download
+    let mediaUrl: string;
+    let finalMimeType: string;
+    let fileSize: number = 0;
+    let sha256: string = "";
 
-    if (!mediaInfo) {
-      console.error("Failed to get media info for voice note:", voiceNoteId);
-      await storage.updateVoiceNote(voiceNoteId, {
-        downloadStatus: "failed",
-      });
-      return;
+    // Check if mediaId is a Twilio URL (contains api.twilio.com) or Meta media ID
+    if (mediaId.startsWith("http")) {
+      // Twilio: Direct URL, get info and download
+      const mediaInfo = await downloadVoiceNoteMedia(mediaId);
+      if (!mediaInfo) {
+        console.error("Failed to get media info for voice note:", voiceNoteId);
+        await storage.updateVoiceNote(voiceNoteId, {
+          downloadStatus: "failed",
+        });
+        return;
+      }
+      mediaUrl = mediaInfo.url;
+      finalMimeType = mediaInfo.mimeType || mimeType || "audio/ogg";
+      fileSize = mediaInfo.fileSize;
+      sha256 = mediaInfo.sha256;
+    } else {
+      // Meta: Two-step process (get info, then download)
+      const mediaInfo = await downloadVoiceNoteMedia(mediaId);
+      if (!mediaInfo) {
+        console.error("Failed to get media info for voice note:", voiceNoteId);
+        await storage.updateVoiceNote(voiceNoteId, {
+          downloadStatus: "failed",
+        });
+        return;
+      }
+      mediaUrl = mediaInfo.url;
+      finalMimeType = mediaInfo.mimeType || mimeType || "audio/ogg";
+      fileSize = mediaInfo.fileSize;
+      sha256 = mediaInfo.sha256;
     }
 
-    // Step 2: Use mimeType from mediaInfo (more accurate) or fallback to parameter
-    const finalMimeType = mediaInfo.mimeType || mimeType || "audio/ogg";
-
-    // Step 3: Download the actual file from WhatsApp
-    const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
-    if (!accessToken) {
-      console.error("WhatsApp access token not available for downloading file");
-      await storage.updateVoiceNote(voiceNoteId, {
-        downloadStatus: "failed",
-      });
-      return;
-    }
-
-    const fileBuffer = await downloadMediaFile(mediaInfo.url, accessToken);
+    // Download the actual file
+    const fileBuffer = await downloadMediaFile(mediaUrl);
 
     if (!fileBuffer) {
       console.error(
@@ -357,11 +377,11 @@ async function downloadAndStoreVoiceNote(
         "Failed to upload voice note to Supabase Storage:",
         voiceNoteId,
       );
-      // Still save the WhatsApp URL as fallback
+      // Still save the media URL as fallback
       await storage.updateVoiceNote(voiceNoteId, {
-        mediaUrl: mediaInfo.url,
-        mediaSha256: mediaInfo.sha256,
-        sizeBytes: mediaInfo.fileSize,
+        mediaUrl: mediaUrl,
+        mediaSha256: sha256,
+        sizeBytes: fileSize,
         downloadStatus: "failed", // Mark as failed since Supabase upload failed
       });
       return;
@@ -377,11 +397,11 @@ async function downloadAndStoreVoiceNote(
           : "ogg";
 
     await storage.updateVoiceNote(voiceNoteId, {
-      mediaUrl: supabaseUrl, // Store Supabase URL instead of temporary WhatsApp URL
+      mediaUrl: supabaseUrl, // Store Supabase URL instead of temporary media URL
       localFilePath: `${voiceNoteId}.${fileExtension}`, // Store file path
-      mimeType: finalMimeType, // Update with accurate mimeType from WhatsApp
-      mediaSha256: mediaInfo.sha256,
-      sizeBytes: mediaInfo.fileSize,
+      mimeType: finalMimeType, // Update with accurate mimeType
+      mediaSha256: sha256,
+      sizeBytes: fileSize,
       downloadStatus: "completed",
     });
 
@@ -389,7 +409,7 @@ async function downloadAndStoreVoiceNote(
       voiceNoteId,
       mediaId,
       supabaseUrl,
-      sizeBytes: mediaInfo.fileSize,
+      sizeBytes: fileSize,
     });
   } catch (error) {
     console.error("Error downloading and storing voice note:", error);
