@@ -568,6 +568,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // For GET requests, Twilio may send a simple verification
       // Return 200 OK to confirm webhook URL is accessible
       console.log("Twilio webhook GET request received");
+      console.log("Twilio webhook GET request received", res);
       res.status(200).send("OK");
     } catch (error: any) {
       console.error("Error verifying Twilio webhook:", error);
@@ -739,8 +740,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Twilio webhook format: From, To, Body, MediaUrl0, MediaContentType0, etc.
       const fromNumber = body.From;
+      const numMedia = parseInt(body.NumMedia || "0", 10);
+      
+      console.log("========== Twilio WhatsApp Webhook Received ==========");
+      console.log("From:", fromNumber);
+      console.log("MessageSid:", body.MessageSid);
+      console.log("NumMedia:", numMedia);
+      console.log("MessageType:", body.MessageType || "text");
+      
+      if (numMedia > 0) {
+        console.log("📎 Media detected in message!");
+        for (let i = 0; i < numMedia; i++) {
+          const mediaUrl = body[`MediaUrl${i}`];
+          const contentType = body[`MediaContentType${i}`];
+          console.log(`  Media ${i}:`, {
+            url: mediaUrl,
+            contentType: contentType,
+          });
+        }
+      } else {
+        console.log("📝 Text message (no media)");
+        if (body.Body) {
+          console.log("Body:", body.Body);
+        }
+      }
+      console.log("Full payload:", JSON.stringify(body, null, 2));
+      console.log("=====================================================");
+      
       if (!fromNumber) {
-        console.log("No From number in Twilio webhook payload");
+        console.log("❌ No From number in Twilio webhook payload");
         return;
       }
 
@@ -797,6 +825,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.markWebhookProcessed(messageIdempotencyKey);
     } catch (error: any) {
       console.error("Error processing Twilio WhatsApp webhook:", error);
+    }
+  });
+
+  // Test endpoint for media download functionality
+  app.post("/api/test/download-media", async (req, res) => {
+    try {
+      const { mediaUrl } = req.body;
+
+      if (!mediaUrl) {
+        return res.status(400).json({
+          error: "Missing mediaUrl in request body",
+          example: {
+            mediaUrl:
+              "https://api.twilio.com/2010-04-01/Accounts/ACxxx/Messages/MMxxx/Media/MExxx",
+          },
+        });
+      }
+
+      console.log("Testing media download with URL:", mediaUrl);
+
+      const {
+        downloadVoiceNoteMedia,
+        downloadMediaFile,
+      } = await import("./whatsapp");
+
+      // Step 1: Get media info
+      console.log("Step 1: Fetching media info...");
+      const mediaInfo = await downloadVoiceNoteMedia(mediaUrl);
+
+      if (!mediaInfo) {
+        return res.status(500).json({
+          error: "Failed to get media info",
+          step: "downloadVoiceNoteMedia",
+        });
+      }
+
+      console.log("Media info retrieved:", mediaInfo);
+
+      // Step 2: Download the file
+      console.log("Step 2: Downloading media file...");
+      const fileBuffer = await downloadMediaFile(mediaInfo.url);
+
+      if (!fileBuffer) {
+        return res.status(500).json({
+          error: "Failed to download media file",
+          step: "downloadMediaFile",
+          mediaInfo,
+        });
+      }
+
+      console.log("File downloaded successfully:", {
+        sizeBytes: fileBuffer.length,
+        mimeType: mediaInfo.mimeType,
+      });
+
+      // Step 3: Test Supabase upload (optional)
+      let supabaseUrl = null;
+      let uploadError = null;
+      try {
+        const { uploadVoiceNoteToStorage } = await import("./supabase");
+        const testFileName = `test-${Date.now()}`;
+        console.log("Step 3: Testing Supabase upload...");
+        supabaseUrl = await uploadVoiceNoteToStorage(
+          fileBuffer,
+          testFileName,
+          mediaInfo.mimeType,
+        );
+        if (supabaseUrl) {
+          console.log("Upload to Supabase successful:", supabaseUrl);
+        }
+      } catch (error: any) {
+        uploadError = error.message || error;
+        console.error("Supabase upload test failed:", uploadError);
+      }
+
+      res.json({
+        success: true,
+        results: {
+          mediaInfo: {
+            url: mediaInfo.url,
+            mimeType: mediaInfo.mimeType,
+            fileSize: mediaInfo.fileSize,
+            sha256: mediaInfo.sha256,
+          },
+          download: {
+            success: true,
+            sizeBytes: fileBuffer.length,
+            bufferType: fileBuffer.constructor.name,
+          },
+          upload: {
+            success: !!supabaseUrl,
+            supabaseUrl: supabaseUrl,
+            error: uploadError,
+          },
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error("Error testing media download:", error);
+      res.status(500).json({
+        error: "Internal server error",
+        message: error.message || error,
+        stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+      });
     }
   });
 

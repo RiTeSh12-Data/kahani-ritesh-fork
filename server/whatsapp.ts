@@ -514,21 +514,24 @@ export async function downloadVoiceNoteMedia(mediaUrl: string): Promise<{
   sha256: string;
   fileSize: number;
 } | null> {
-  // Twilio provides media URLs directly in webhook, no need for two-step process
-  // This function is kept for compatibility but mediaUrl is already the direct URL
+  // Twilio provides media URLs directly in webhook (MediaUrl0)
+  // Format: https://api.twilio.com/2010-04-01/Accounts/{AccountSid}/Messages/{MessageSid}/Media/{MediaSid}
+  // This URL can be downloaded directly with basic auth (AccountSid:AuthToken)
   try {
-    // Fetch media info from Twilio Media API
     const config = getConfig();
     if (!config) return null;
 
     const client = getTwilioClient();
     if (!client) return null;
 
-    // Extract Media SID from URL if it's a Twilio media URL
+    // Extract Media SID and Message SID from URL
     // Format: https://api.twilio.com/2010-04-01/Accounts/{AccountSid}/Messages/{MessageSid}/Media/{MediaSid}
-    const mediaSidMatch = mediaUrl.match(/\/Media\/([^\/]+)/);
-    if (!mediaSidMatch) {
-      // If it's already a direct URL, return it
+    const mediaSidMatch = mediaUrl.match(/\/Media\/([^\/\?]+)/);
+    const messageSidMatch = mediaUrl.match(/\/Messages\/([^\/]+)\//);
+    
+    if (!mediaSidMatch || !messageSidMatch) {
+      // If URL format doesn't match, return as-is (might be a direct URL)
+      console.warn("Unexpected media URL format:", mediaUrl);
       return {
         url: mediaUrl,
         mimeType: "audio/ogg", // Default, will be updated when downloading
@@ -538,22 +541,39 @@ export async function downloadVoiceNoteMedia(mediaUrl: string): Promise<{
     }
 
     const mediaSid = mediaSidMatch[1];
+    const messageSid = messageSidMatch[1];
 
-    // Fetch media from Twilio
-    const media = await client.messages(mediaSid).media(mediaSid).fetch();
+    // Fetch media metadata from Twilio API to get content type and size
+    try {
+      const media = await client.messages(messageSid).media(mediaSid).fetch();
 
-    console.log("Retrieved media info from Twilio:", {
-      mediaUrl,
-      mediaSid,
-      contentType: media.contentType,
-    });
+      console.log("Retrieved media info from Twilio:", {
+        mediaUrl,
+        mediaSid,
+        messageSid,
+        contentType: media.contentType,
+        contentLength: media.contentLength,
+      });
 
-    return {
-      url: media.uri.replace(".json", ""), // Remove .json to get direct download URL
-      mimeType: media.contentType || "audio/ogg",
-      sha256: "", // Twilio doesn't provide SHA256
-      fileSize: parseInt(media.contentLength || "0", 10),
-    };
+      return {
+        url: mediaUrl, // Use the original URL for direct download
+        mimeType: media.contentType || "audio/ogg",
+        sha256: "", // Twilio doesn't provide SHA256
+        fileSize: parseInt(media.contentLength || "0", 10),
+      };
+    } catch (fetchError: any) {
+      console.warn("Failed to fetch media metadata, using defaults:", {
+        error: fetchError.message || fetchError,
+        mediaUrl,
+      });
+      // Fallback: return URL with defaults
+      return {
+        url: mediaUrl,
+        mimeType: "audio/ogg",
+        sha256: "",
+        fileSize: 0,
+      };
+    }
   } catch (error: any) {
     console.error("Failed to get media info from Twilio:", {
       error: error.message || error,
@@ -574,59 +594,44 @@ export async function downloadMediaFile(
   accessToken?: string, // Not used for Twilio, kept for compatibility
 ): Promise<Buffer | null> {
   try {
-    // Twilio media URLs are publicly accessible with auth
-    // We need to use Twilio client to download
-    const client = getTwilioClient();
-    if (!client) {
-      // Fallback: try direct download if client not available
-      const response = await axios.get(mediaUrl, {
-        responseType: "arraybuffer",
-        auth: {
-          username: process.env.TWILIO_ACCOUNT_SID || "",
-          password: process.env.TWILIO_AUTH_TOKEN || "",
-        },
-      });
-      return Buffer.from(response.data);
+    // Twilio media URLs can be downloaded directly with basic auth
+    // Format: https://api.twilio.com/2010-04-01/Accounts/{AccountSid}/Messages/{MessageSid}/Media/{MediaSid}
+    // Auth: Basic auth with AccountSid:AuthToken (same as curl -u)
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+
+    if (!accountSid || !authToken) {
+      console.error("Twilio credentials not configured for media download");
+      return null;
     }
 
-    // Extract Media SID from URL
-    const mediaSidMatch = mediaUrl.match(/\/Media\/([^\/]+)/);
-    if (mediaSidMatch) {
-      const mediaSid = mediaSidMatch[1];
-      // Get the message SID from URL
-      const messageSidMatch = mediaUrl.match(/\/Messages\/([^\/]+)\//);
-      if (messageSidMatch) {
-        const messageSid = messageSidMatch[1];
-        const media = await client
-          .messages(messageSid)
-          .media(mediaSid)
-          .fetch();
-        // Download the media file
-        const response = await axios.get(media.uri.replace(".json", ""), {
-          responseType: "arraybuffer",
-          auth: {
-            username: process.env.TWILIO_ACCOUNT_SID || "",
-            password: process.env.TWILIO_AUTH_TOKEN || "",
-          },
-        });
-        return Buffer.from(response.data);
-      }
-    }
-
-    // Fallback: direct download
+    // Download directly from the media URL with basic auth
+    // This matches the curl command: curl -u "AccountSid:AuthToken" "MediaUrl"
     const response = await axios.get(mediaUrl, {
       responseType: "arraybuffer",
       auth: {
-        username: process.env.TWILIO_ACCOUNT_SID || "",
-        password: process.env.TWILIO_AUTH_TOKEN || "",
+        username: accountSid,
+        password: authToken,
       },
+      // Set timeout for large files (30 seconds)
+      timeout: 30000,
     });
 
-    return Buffer.from(response.data);
+    const buffer = Buffer.from(response.data);
+    
+    console.log("Downloaded media file from Twilio:", {
+      mediaUrl,
+      sizeBytes: buffer.length,
+      contentType: response.headers["content-type"],
+    });
+
+    return buffer;
   } catch (error: any) {
     console.error("Failed to download media file from Twilio:", {
       error: error.message || error,
       mediaUrl,
+      statusCode: error.response?.status,
+      statusText: error.response?.statusText,
     });
     return null;
   }
